@@ -1,4 +1,9 @@
 import jwt from "jsonwebtoken";
+import { Request } from "express";
+
+export interface AuthRequest extends Request {
+  userId?: any; // or your User type
+}
 
 const JWT_SECRET = process.env.JWT_SECRET!;
 
