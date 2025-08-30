@@ -3,6 +3,7 @@ import { app } from "../src/index";
 import { db } from "../src/config/db";
 import { userWallets } from "../src/model/wallet";
 import jwt from "jsonwebtoken";
+import { eq } from "drizzle-orm";
 
 // mock secret same as in your auth middleware
 const JWT_SECRET = process.env.JWT_SECRET || "supersecret";
@@ -33,7 +34,7 @@ describe("GET /wallet/balance", () => {
 
   afterAll(async () => {
     // cleanup test wallet
-    await db.delete(userWallets).where(userWallets.userProfileId.eq(userId));
+    await db.delete(userWallets).where(eq(userWallets.userProfileId, userId));
   });
 
   it("should return wallet balance for authenticated user", async () => {
