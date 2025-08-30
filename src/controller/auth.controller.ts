@@ -4,6 +4,7 @@ import { authUsers } from "../model/schema";
 import { loginWithGoogle } from "../services/profile.service";
 import { OAuth2Client } from "google-auth-library";
 import { eq } from "drizzle-orm";
+import { JWT_SECRET } from "../config/envs";
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -46,7 +47,7 @@ export const googleSignup = async (req, res) => {
       .returning();
 
     // Generate JWT
-    const jwtToken = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
+    const jwtToken = jwt.sign({ id: user.id }, JWT_SECRET, {
       expiresIn: "7d",
     });
 

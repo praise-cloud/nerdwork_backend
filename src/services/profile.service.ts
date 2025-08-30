@@ -4,9 +4,10 @@ import jwt from "jsonwebtoken";
 import { authUsers } from "../model/auth";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcrypt";
+import { JWT_SECRET } from "../config/envs";
 
 export const generateToken = (user: any) => {
-  return jwt.sign({ id: user.id, email: user.email }, process.env.JWT_SECRET, {
+  return jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, {
     expiresIn: "7d",
   });
 };
