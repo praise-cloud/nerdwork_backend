@@ -15,6 +15,9 @@ import { DATABASE_URL } from "./envs";
 // export const db = drizzle(pool);
 
 config({ path: ".env.local" });
+if (!DATABASE_URL) {
+  throw new Error("DATABASE_URL is not defined");
+}
 
-const sql = neon(DATABASE_URL!);
+const sql = neon(DATABASE_URL);
 export const db = drizzle({ client: sql, schema });
