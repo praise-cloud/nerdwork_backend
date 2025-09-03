@@ -15,6 +15,10 @@ export const googleAuthController = async (req, res) => {
       return res.status(400).json({ error: "Google ID token required" });
     }
 
+    if (!GOOGLE_CLIENT_ID) {
+      return res.status(401).json({ message: "Google authentication failed" });
+    }
+
     // ✅ Verify token with Google
     const ticket = await client.verifyIdToken({
       idToken,
