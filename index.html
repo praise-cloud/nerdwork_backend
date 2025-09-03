@@ -1,0 +1,194 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Login and Pay</title>
+  <style>
+    body { font-family: Arial; max-width: 400px; margin: 40px auto; }
+    form { display: flex; flex-direction: column; gap: 10px; }
+    input, button { padding: 10px; font-size: 16px; }
+    #checkoutSection { margin-top: 30px; }
+  </style>
+</head>
+<body>
+
+  <h2>Login</h2>
+  <form id="loginForm">
+    {
+      "email": "test2@example.com",
+      "password": "password123"
+    }
+    <input type="email" id="email" placeholder="Email" required />
+    <input type="password" id="password" placeholder="Password" required />
+    <button type="submit">Login</button>
+  </form>
+
+
+  <div id="mintNftSection" style="display:none; margin-top:30px;">
+    <h2>Mint NFT</h2>
+    <form id="mintNftForm" enctype="multipart/form-data">
+      <input type="text" id="nftName" name="name" placeholder="NFT Name" required />
+      <textarea id="nftDescription" name="description" placeholder="Description" required></textarea>
+      <input type="text" id="nftAuthor" name="author" placeholder="Author" />
+      <input type="text" id="nftSeries" name="series" placeholder="Series" />
+      <input type="text" id="nftIssue" name="issue" placeholder="Issue" />
+      <input type="text" id="nftGenre" name="genre" placeholder="Genre" />
+      <input type="number" id="nftPages" name="pages" placeholder="Pages" />
+      <input type="date" id="nftPublishDate" name="publishDate" placeholder="Publish Date" />
+      <input type="text" id="nftCollectionId" name="collectionId" placeholder="Collection ID (optional)" />
+      <input type="text" id="nftAttributes" name="attributes" placeholder='Attributes (JSON, optional)' />
+      <label>Image: <input type="file" id="nftImage" name="image" accept="image/*" required /></label>
+      <button type="submit">Mint NFT</button>
+    </form>
+    <div id="mintNftResult" style="margin-top:10px;"></div>
+  </div>
+  <script>
+    // Show mint form after login
+    const mintNftSection = document.getElementById("mintNftSection");
+    loginForm.addEventListener("submit", () => {
+      mintNftSection.style.display = "block";
+    });
+
+    document.getElementById("mintNftForm").addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const token = localStorage.getItem("token");
+      if (!token) return alert("Please log in first.");
+
+      const form = e.target;
+      const formData = new FormData();
+      formData.append("name", form.nftName.value);
+      formData.append("description", form.nftDescription.value);
+      formData.append("author", form.nftAuthor.value);
+      formData.append("series", form.nftSeries.value);
+      formData.append("issue", form.nftIssue.value);
+      formData.append("genre", form.nftGenre.value);
+      formData.append("pages", form.nftPages.value);
+      formData.append("publishDate", form.nftPublishDate.value);
+      formData.append("collectionId", form.nftCollectionId.value);
+      formData.append("attributes", form.nftAttributes.value);
+      formData.append("image", form.nftImage.files[0]);
+      // You may need to get userProfileId from your backend or JWT
+      // For demo, try to get from token or prompt user
+      let userProfileId = localStorage.getItem("userProfileId");
+      if (!userProfileId) {
+        userProfileId = prompt("Enter your userProfileId:");
+        if (!userProfileId) return alert("userProfileId is required.");
+        localStorage.setItem("userProfileId", userProfileId);
+      }
+      formData.append("userProfileId", userProfileId);
+
+      document.getElementById("mintNftResult").innerText = "Minting NFT...";
+      try {
+        const res = await fetch("http://localhost:5000/nft/mint", {
+          method: "POST",
+          headers: { "Authorization": `Bearer ${token}` },
+          body: formData
+        });
+        const data = await res.json();
+        if (data.success) {
+          document.getElementById("mintNftResult").innerHTML = `
+            <span style="color:green;">NFT minted!</span><br>
+            Asset ID: ${data.assetId}<br>
+            <a href="${data.metadataUri}" target="_blank">View Metadata</a>
+          `;
+        } else {
+          document.getElementById("mintNftResult").innerHTML = `<span style="color:red;">${data.error || "Mint failed"}</span>`;
+        }
+      } catch (err) {
+        document.getElementById("mintNftResult").innerHTML = `<span style="color:red;">Error: ${err.message}</span>`;
+      }
+    });
+  </script>
+
+  <div id="checkoutSection" style="display:none;">
+    <h2>Buy Tokens</h2>
+    <input type="number" id="amount" placeholder="Amount in USD" value="1000" />
+    <p>Price: $0.01 USD</p>
+    <input type="text" id="name" placeholder="Name" value="Nerd Work Token" />
+    <p>Network: Testnet</p>
+
+    <button id="buyBtn">Buy Now</button>
+    <div id="helioCheckoutContainer1" style="margin-top: 20px;"></div>
+  </div>
+   <script
+        type="module"
+        crossorigin
+        async
+        src="https://embed.hel.io/assets/index-v1.js"
+      ></script>
+
+
+  <script>
+    let id ="";
+    const loginForm = document.getElementById("loginForm");
+    const buyBtn = document.getElementById("buyBtn");
+    const checkoutSection = document.getElementById("checkoutSection");
+
+    loginForm.addEventListener("submit", async (e) => {
+      e.preventDefault();
+      const email = document.getElementById("email").value;
+      const password = document.getElementById("password").value;
+
+      try {
+        const res = await fetch("http://localhost:5000/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+
+        const data = await res.json();
+        if (data.token) {
+          localStorage.setItem("token", data.token);
+          alert("Login successful!");
+          checkoutSection.style.display = "block";
+        } else {
+          alert("Login failed");
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Login error");
+      }
+    });
+
+    buyBtn.addEventListener("click", async () => {
+      const token = localStorage.getItem("token");
+      if (!token) return alert("Please log in first.");
+
+      try {
+        const res = await fetch("http://localhost:5000/payment/helio/link", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${token}`
+          },
+          body: JSON.stringify({
+            amount: document.getElementById("amount").value,
+            name: document.getElementById("name").value
+          })
+        });
+
+        const data = await res.json();
+        if (!data.success || !data.paylinkId) {
+          return alert("Failed to create payment link");
+        }
+        id = data.paylinkId;
+        console.log(data)
+        
+         
+       
+          window.location.href = `./indexPay.html?link=${data.paylinkId}&amount=${data.payment.price}`;
+        
+      } catch (err) {
+        console.error(err);
+        alert("Error creating payment link");
+      }
+    });
+
+
+
+     
+  </script>
+
+ 
+</body>
+</html>
