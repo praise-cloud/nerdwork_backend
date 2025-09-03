@@ -16,7 +16,7 @@ export const googleAuthController = async (req, res) => {
     }
 
     if (!GOOGLE_CLIENT_ID) {
-      return res.status(401).json({ message: "Google authentication failed" });
+      return res.status(401).json({ message: "Client id is not defined" });
     }
 
     // ✅ Verify token with Google
