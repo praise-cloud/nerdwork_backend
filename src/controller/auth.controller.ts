@@ -4,9 +4,9 @@ import { authUsers } from "../model/schema";
 import { loginWithGoogle } from "../services/profile.service";
 import { OAuth2Client } from "google-auth-library";
 import { eq } from "drizzle-orm";
-import { JWT_SECRET } from "../config/envs";
+import { GOOGLE_CLIENT_ID, JWT_SECRET } from "../config/envs";
 
-const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
+const client = new OAuth2Client(GOOGLE_CLIENT_ID);
 
 export const googleAuthController = async (req, res) => {
   try {
@@ -18,7 +18,7 @@ export const googleAuthController = async (req, res) => {
     // ✅ Verify token with Google
     const ticket = await client.verifyIdToken({
       idToken,
-      audience: process.env.GOOGLE_CLIENT_ID,
+      audience: GOOGLE_CLIENT_ID,
     });
     const payload = ticket.getPayload();
     if (!payload) throw new Error("Invalid Google token");
