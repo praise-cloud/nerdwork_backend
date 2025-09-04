@@ -62,7 +62,8 @@ export const googleAuthController = async (req, res) => {
       .from(readerProfile)
       .where(eq(readerProfile.userId, user.id));
 
-    const isNewUser = !creator && !reader;
+    const cProfile = !creator;
+    const rProfile = !reader;
 
     // ✅ Generate JWT
     const token = jwt.sign(
@@ -76,7 +77,8 @@ export const googleAuthController = async (req, res) => {
     return res.status(200).json({
       token,
       user,
-      isNewUser,
+      cProfile,
+      rProfile,
     });
   } catch (err) {
     console.error(err);
