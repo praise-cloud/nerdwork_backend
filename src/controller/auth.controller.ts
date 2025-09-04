@@ -54,7 +54,9 @@ export const googleAuthController = async (req, res) => {
         username: email.split("@")[0],
         passwordHash: "secret",
         emailVerified: true,
+        twoFactorEnabled: false,
         isActive: true,
+        loginAttempts: 0,
       })
       .returning();
 
@@ -67,7 +69,7 @@ export const googleAuthController = async (req, res) => {
       expiresIn: "7d",
     });
 
-    return res.json({ token, user, isNewUser });
+    return res.status(200).json({ token, user, isNewUser });
   } catch (err) {
     console.error(err);
     return res.status(500).json({ message: err.message });
