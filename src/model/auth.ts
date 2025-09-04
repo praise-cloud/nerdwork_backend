@@ -17,7 +17,7 @@ export const authUsers = pgTable("auth_users", {
   id: uuid("id").primaryKey().defaultRandom(), // UUID
   email: text("email").notNull().unique(),
   username: text("username").notNull().unique(),
-  passwordHash: text("password_hash"),
+  // passwordHash: text("password_hash"),
   emailVerified: boolean("email_verified").notNull().default(false),
   twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
 
