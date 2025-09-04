@@ -1,5 +1,5 @@
 {
-  "id": "eec915fb-11c2-40a2-9282-8fc00633c5b4",
+  "id": "c3121cd4-c315-4f6a-bc09-918a6b12efc4",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -553,11 +553,12 @@
           "primaryKey": false,
           "notNull": false
         },
-        "genre": {
-          "name": "genre",
-          "type": "text",
+        "genres": {
+          "name": "genres",
+          "type": "text[]",
           "primaryKey": false,
-          "notNull": true
+          "notNull": true,
+          "default": "'{}'::text[]"
         },
         "wallet_type": {
           "name": "wallet_type",

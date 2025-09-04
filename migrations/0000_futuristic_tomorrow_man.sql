@@ -81,7 +81,7 @@ CREATE TABLE "creator_profile" (
 	"creator_name" text NOT NULL,
 	"phone_number" text,
 	"bio" text,
-	"genre" text NOT NULL,
+	"genres" text[] DEFAULT '{}'::text[] NOT NULL,
 	"wallet_type" "wallet_type_enum",
 	"wallet_address" text,
 	"pin_hash" text,

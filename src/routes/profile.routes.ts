@@ -92,7 +92,7 @@ router.post("/", getProfile);
 
 /**
  * @swagger
- * /profile:
+ * /:
  *   get:
  *     summary: Get the authenticated user's profile
  *     description: Retrieves the profile of the logged-in user (creator or reader) based on the JWT provided in the Authorization header.
