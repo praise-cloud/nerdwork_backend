@@ -52,7 +52,7 @@ export const googleAuthController = async (req, res) => {
       .values({
         email,
         username: email.split("@")[0],
-        passwordHash: "", // not needed for Google auth
+        passwordHash: "secret", // not needed for Google auth
         emailVerified: true,
         isActive: true,
       })
