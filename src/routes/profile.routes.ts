@@ -2,7 +2,8 @@ import express from "express";
 import {
   addCreatorProfile,
   addReaderProfile,
-  getProfile,
+  getCreatorProfile,
+  getReaderProfile,
 } from "../controller/profile.controller";
 
 const router = express.Router();
@@ -23,12 +24,20 @@ router.post("/creator", addCreatorProfile);
 router.post("/reader", addReaderProfile);
 
 /**
- * @route   GET /profile/
- * @desc    Get Profile
+ * @route   GET /profile/creator
+ * @desc    Get Creator Profile
  * @access  Private (Jwt required)
  */
 
-router.get("/", getProfile);
+router.get("/creator", getCreatorProfile);
+
+/**
+ * @route   GET /profile/reader
+ * @desc    Get Reader Profile
+ * @access  Private (Jwt required)
+ */
+
+router.get("/reader", getReaderProfile);
 
 /**
  * @swagger
@@ -92,45 +101,6 @@ router.get("/", getProfile);
 
 /**
  * @swagger
- * /:
- *   get:
- *     summary: Get the authenticated user's profile
- *     description: Retrieves the profile of the logged-in user (creator or reader) based on the JWT provided in the Authorization header.
- *     tags:
- *       - Profile
- *     security:
- *       - bearerAuth: []
- *     responses:
- *       200:
- *         description: Successfully retrieved profile
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 role:
- *                   type: string
- *                   example: creator
- *                 profile:
- *                   type: object
- *                   example:
- *                     id: "uuid"
- *                     userId: "uuid"
- *                     fullName: "John Doe"
- *                     creatorName: "JD Comics"
- *                     phoneNumber: "+2348000000000"
- *                     bio: "Comic creator"
- *                     genres: "fantasy, sci-fi"
- *                     walletType: "phantom"
- *                     walletAddress: "0x1234abcd"
- *                     createdAt: "2025-08-29T12:00:00Z"
- *       401:
- *         description: Unauthorized (missing or invalid token)
- *       404:
- *         description: Profile not found
- */
-/**
- * @swagger
  * /profile/reader:
  *   post:
  *     summary: Create a reader profile
@@ -166,6 +136,81 @@ router.get("/", getProfile);
  *                   $ref: '#/components/schemas/ReaderProfile'
  *       400:
  *         description: Failed to create reader profile
+ */
+
+/**
+ * @swagger
+ * /creator:
+ *   get:
+ *     summary: Get The authenticated creator's profile
+ *     description: Retrieves the profile of the logged-in user (creator) based on the JWT provided in the Authorization header.
+ *     tags:
+ *       - Profile
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved profile
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 role:
+ *                   type: string
+ *                   example: creator
+ *                 profile:
+ *                   type: object
+ *                   example:
+ *                     id: "uuid"
+ *                     userId: "uuid"
+ *                     fullName: "John Doe"
+ *                     creatorName: "JD Comics"
+ *                     phoneNumber: "+2348000000000"
+ *                     bio: "Comic creator"
+ *                     genres: "fantasy, sci-fi"
+ *                     walletType: "phantom"
+ *                     walletAddress: "0x1234abcd"
+ *                     createdAt: "2025-08-29T12:00:00Z"
+ *       401:
+ *         description: Unauthorized (missing or invalid token)
+ *       404:
+ *         description: Profile not found
+ */
+
+/**
+ * @swagger
+ * /reader:
+ *   get:
+ *     summary: Get The authenticated reader's profile
+ *     description: Retrieves the profile of the logged-in user (reader) based on the JWT provided in the Authorization header.
+ *     tags:
+ *       - Profile
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: Successfully retrieved profile
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 role:
+ *                   type: string
+ *                   example: creator
+ *                 profile:
+ *                   type: object
+ *                   example:
+ *                     id: "uuid"
+ *                     userId: "uuid"
+ *                     genres: "fantasy, sci-fi"
+ *                     walletId: "0x1234abcd"
+ *                     createdAt: "2025-08-29T12:00:00Z"
+ *       401:
+ *         description: Unauthorized (missing or invalid token)
+ *       404:
+ *         description: Profile not found
  */
 
 /**

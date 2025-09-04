@@ -56,7 +56,7 @@ export const addReaderProfile = async (req, res) => {
   }
 };
 
-export const getProfile = async (req, res) => {
+export const getCreatorProfile = async (req, res) => {
   try {
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
@@ -78,7 +78,25 @@ export const getProfile = async (req, res) => {
       return res.json({ role: "creator", profile: creator });
     }
 
-    // Try fetching reader profile
+    return res.status(404).json({ message: "Profile not found" });
+  } catch (err) {
+    console.error(err);
+    return res.status(401).json({ message: "Invalid or expired token" });
+  }
+};
+
+export const getReaderProfile = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const token = authHeader.split(" ")[1];
+    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
+
+    const userId = decoded.userId;
+
     const [reader] = await db
       .select()
       .from(readerProfile)
