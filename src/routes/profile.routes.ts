@@ -140,7 +140,7 @@ router.get("/reader", getReaderProfile);
 
 /**
  * @swagger
- * /creator:
+ * /profile/creator:
  *   get:
  *     summary: Get The authenticated creator's profile
  *     description: Retrieves the profile of the logged-in user (creator) based on the JWT provided in the Authorization header.
@@ -180,7 +180,7 @@ router.get("/reader", getReaderProfile);
 
 /**
  * @swagger
- * /reader:
+ * /profile/reader:
  *   get:
  *     summary: Get The authenticated reader's profile
  *     description: Retrieves the profile of the logged-in user (reader) based on the JWT provided in the Authorization header.
