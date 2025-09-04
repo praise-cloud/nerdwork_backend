@@ -72,8 +72,10 @@ router.post("/", getProfile);
  *                 type: string
  *                 example: "Comic creator focusing on sci-fi and fantasy"
  *               genres:
- *                 type: string
- *                 example: "sci-fi,fantasy"
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["fantasy", "sci-fi"]
  *     responses:
  *       200:
  *         description: Creator profile successfully created

@@ -50,8 +50,10 @@ export const creatorProfile = pgTable("creator_profile", {
   phoneNumber: text("phone_number"),
   bio: text("bio"),
 
-  genres: text("genre").notNull(),
-
+  genres: text("genres")
+    .array()
+    .notNull()
+    .default(sql`'{}'::text[]`),
   walletType: walletTypeEnum("wallet_type"), // 'solana' | 'phantom' (nullable until chosen)
   walletAddress: text("wallet_address"), // nullable until provided
 
