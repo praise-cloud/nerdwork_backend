@@ -55,8 +55,12 @@ export const googleAuthController = async (req, res) => {
         passwordHash: "secret",
         emailVerified: true,
         twoFactorEnabled: false,
-        isActive: true,
+        lastLoginAt: new Date(),
         loginAttempts: 0,
+        lockedUntil: null,
+        isActive: true,
+        createdAt: new Date(),
+        updatedAt: new Date(),
       })
       .returning();
 
