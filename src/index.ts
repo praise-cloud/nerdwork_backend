@@ -7,6 +7,8 @@ import { authenticate } from "./middleware/common/auth";
 import nftRoutes from "./routes/nft.routes";
 import walletRoutes from "./routes/wallet.routes";
 import profileRoutes from "./routes/profile.routes";
+import { db } from "./config/db";
+import { authUsers } from "./model/auth";
 
 app.use("/auth", authRoutes);
 app.use("/payment", authenticate, paymentRoutes);
@@ -27,6 +29,15 @@ const PORT = 5000;
  */
 app.get("/", (req: Request, res: Response) => {
   res.status(200).json({ data: `Hello, world! - ${PORT}` });
+});
+
+app.get("/db-test", async (req, res) => {
+  try {
+    const [result] = await db.select().from(authUsers).limit(1);
+    res.json({ ok: true, result });
+  } catch (err) {
+    res.status(500).json({ ok: false, error: err });
+  }
 });
 
 app.use(globalNotFoundHandler);
