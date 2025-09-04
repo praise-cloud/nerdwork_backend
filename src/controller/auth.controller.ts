@@ -27,39 +27,40 @@ export const googleAuthController = async (req, res) => {
     // const payload = ticket.getPayload();
 
     const payload: any = jwt.decode(idToken);
+    console.log("🔎 Decoded Google payload:", payload);
 
     if (!payload) throw new Error("Invalid Google token");
 
     const { email, sub: googleId, picture } = payload;
 
     // ✅ Check if user already exists
-    const users = await db
-      .select()
-      .from(authUsers)
-      .where(eq(authUsers.email, email));
-    const existingUser = users[0] ?? null;
+    // const users = await db
+    //   .select()
+    //   .from(authUsers)
+    //   .where(eq(authUsers.email, email));
+    // const existingUser = users[0] ?? null;
 
     let user;
     let isNewUser = false;
 
-    if (existingUser) {
-      user = existingUser;
-    } else {
-      // ✅ Create new user
-      const [newUser] = await db
-        .insert(authUsers)
-        .values({
-          email,
-          username: email.split("@")[0],
-          passwordHash: "", // not needed for Google auth
-          emailVerified: true,
-          isActive: true,
-        })
-        .returning();
+    // if (existingUser) {
+    //   user = existingUser;
+    // } else {
+    // ✅ Create new user
+    const [newUser] = await db
+      .insert(authUsers)
+      .values({
+        email,
+        username: email.split("@")[0],
+        passwordHash: "", // not needed for Google auth
+        emailVerified: true,
+        isActive: true,
+      })
+      .returning();
 
-      user = newUser;
-      isNewUser = true;
-    }
+    user = newUser;
+    isNewUser = true;
+    // }
 
     // ✅ Generate JWT
     const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, {
