@@ -1,10 +1,9 @@
 import jwt from "jsonwebtoken";
 import { db } from "../config/db";
-import { authUsers } from "../model/schema";
+import { authUsers, creatorProfile, readerProfile } from "../model/schema";
 import { loginWithGoogle } from "../services/profile.service";
 import { OAuth2Client } from "google-auth-library";
 import { eq } from "drizzle-orm";
-import { JWT_SECRET } from "../config/envs";
 
 const client = new OAuth2Client(process.env.GOOGLE_CLIENT_ID);
 
@@ -26,9 +25,6 @@ export const googleAuthController = async (req, res) => {
     });
     const payload = ticket.getPayload();
 
-    // const payload: any = jwt.decode(idToken);
-    console.log("🔎 Decoded Google payload:", payload);
-
     if (!payload) throw new Error("Invalid Google token");
 
     const { email, sub: googleId, picture } = payload;
@@ -38,39 +34,55 @@ export const googleAuthController = async (req, res) => {
       .select()
       .from(authUsers)
       .where(eq(authUsers.email, email));
-    const existingUser = users[0] ?? null;
+    let user = users[0] ?? null;
 
-    let user;
-    let isNewUser = false;
-
-    if (existingUser) {
-      user = existingUser;
-    } else {
-      // ✅ Create new user
+    if (!user) {
+      // ✅ Create new user if not found
       const [newUser] = await db
         .insert(authUsers)
         .values({
           email,
           username: email.split("@")[0],
-          passwordHash: "secret",
           emailVerified: true,
           isActive: true,
         })
         .returning();
 
       user = newUser;
-      isNewUser = true;
     }
 
-    // ✅ Generate JWT
-    const token = jwt.sign({ id: user.id, email: user.email }, JWT_SECRET, {
-      expiresIn: "7d",
-    });
+    // 🔍 Check if profile exists (creator OR reader)
+    const [creator] = await db
+      .select()
+      .from(creatorProfile)
+      .where(eq(creatorProfile.userId, user.id));
 
-    return res.status(200).json({ token, user, isNewUser });
+    const [reader] = await db
+      .select()
+      .from(readerProfile)
+      .where(eq(readerProfile.userId, user.id));
+
+    const isNewUser = !creator && !reader;
+
+    // ✅ Generate JWT
+    const token = jwt.sign(
+      { userId: user.id, email: user.email },
+      process.env.JWT_SECRET!,
+      {
+        expiresIn: "7d",
+      }
+    );
+
+    return res.status(200).json({
+      token,
+      user,
+      isNewUser,
+    });
   } catch (err) {
     console.error(err);
-    return res.status(500).json({ message: err });
+    return res
+      .status(500)
+      .json({ message: err.message || "Internal Server Error" });
   }
 };
 
