@@ -8,14 +8,14 @@ import {
 const router = express.Router();
 
 /**
- * @route   POST /api/profile/creator
+ * @route   POST /profile/creator
  * @desc    Create a Creator Profile
  * @access  Private (after signup)
  */
 router.post("/creator", addCreatorProfile);
 
 /**
- * @route   POST /api/profile/reader
+ * @route   POST /profile/reader
  * @desc    Create a Reader Profile
  * @access  Private (after signup)
  */
@@ -23,7 +23,7 @@ router.post("/creator", addCreatorProfile);
 router.post("/reader", addReaderProfile);
 
 /**
- * @route   GET /api/profile/
+ * @route   GET /profile/
  * @desc    Get Profile
  * @access  Private (Jwt required)
  */
@@ -39,7 +39,7 @@ router.post("/", getProfile);
 
 /**
  * @swagger
- * /api/profile/creator:
+ * /profile/creator:
  *   post:
  *     summary: Create a creator profile
  *     tags: [Profiles]
@@ -129,7 +129,7 @@ router.post("/", getProfile);
  */
 /**
  * @swagger
- * /api/profile/reader:
+ * /profile/reader:
  *   post:
  *     summary: Create a reader profile
  *     tags: [Profiles]
