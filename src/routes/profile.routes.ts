@@ -28,7 +28,7 @@ router.post("/reader", addReaderProfile);
  * @access  Private (Jwt required)
  */
 
-router.post("/", getProfile);
+router.get("/", getProfile);
 
 /**
  * @swagger
