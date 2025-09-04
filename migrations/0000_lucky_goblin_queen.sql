@@ -1,16 +1,4 @@
-CREATE TABLE "auth_sessions" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"user_id" uuid NOT NULL,
-	"session_token" text NOT NULL,
-	"refresh_token" text NOT NULL,
-	"ip_address" text NOT NULL,
-	"user_agent" text NOT NULL,
-	"expires_at" timestamp NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	CONSTRAINT "auth_sessions_session_token_unique" UNIQUE("session_token"),
-	CONSTRAINT "auth_sessions_refresh_token_unique" UNIQUE("refresh_token")
-);
---> statement-breakpoint
+CREATE TYPE "public"."wallet_type_enum" AS ENUM('solana', 'phantom');--> statement-breakpoint
 CREATE TABLE "auth_users" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"email" text NOT NULL,
@@ -26,6 +14,19 @@ CREATE TABLE "auth_users" (
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "auth_users_email_unique" UNIQUE("email"),
 	CONSTRAINT "auth_users_username_unique" UNIQUE("username")
+);
+--> statement-breakpoint
+CREATE TABLE "auth_sessions" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" uuid NOT NULL,
+	"session_token" text NOT NULL,
+	"refresh_token" text NOT NULL,
+	"ip_address" text NOT NULL,
+	"user_agent" text NOT NULL,
+	"expires_at" timestamp NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "auth_sessions_session_token_unique" UNIQUE("session_token"),
+	CONSTRAINT "auth_sessions_refresh_token_unique" UNIQUE("refresh_token")
 );
 --> statement-breakpoint
 CREATE TABLE "password_resets" (
@@ -63,6 +64,7 @@ CREATE TABLE "payments" (
 	"currency" text NOT NULL,
 	"nwt_amount" text,
 	"exchange_rate" text,
+	"webhook_id" text,
 	"payment_intent_id" text,
 	"blockchain_tx_hash" text,
 	"status" text NOT NULL,
@@ -90,18 +92,47 @@ CREATE TABLE "user_profiles" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "creator_profile" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" uuid NOT NULL,
+	"full_name" text NOT NULL,
+	"creator_name" text NOT NULL,
+	"phone_number" text,
+	"bio" text,
+	"genre" text NOT NULL,
+	"wallet_type" "wallet_type_enum",
+	"wallet_address" text,
+	"pin_hash" text,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "creator_profile_user_id_unique" UNIQUE("user_id")
+);
+--> statement-breakpoint
+CREATE TABLE "reader_profile" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" uuid NOT NULL,
+	"genre" text NOT NULL,
+	"wallet_id" varchar(12) NOT NULL,
+	"pin_hash" text NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "reader_profile_user_id_unique" UNIQUE("user_id"),
+	CONSTRAINT "reader_profile_wallet_id_unique" UNIQUE("wallet_id")
+);
+--> statement-breakpoint
 CREATE TABLE "user_wallets" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_profile_id" uuid NOT NULL,
-	"nwt_balance" text NOT NULL,
-	"nwt_locked_balance" text NOT NULL,
+	"nwt_balance" integer NOT NULL,
+	"nwt_locked_balance" integer NOT NULL,
 	"primary_wallet_address" text,
 	"kyc_status" text NOT NULL,
 	"kyc_level" integer DEFAULT 0 NOT NULL,
-	"spending_limit_daily" text,
-	"spending_limit_monthly" text,
+	"spending_limit_daily" integer,
+	"spending_limit_monthly" integer,
 	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "user_wallets_user_profile_id_unique" UNIQUE("user_profile_id")
 );
 --> statement-breakpoint
 CREATE TABLE "wallet_addresses" (
@@ -115,9 +146,20 @@ CREATE TABLE "wallet_addresses" (
 	"added_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
+CREATE TABLE "loyalty_points" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"user_id" uuid NOT NULL,
+	"points" integer DEFAULT 0 NOT NULL,
+	"last_updated" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 ALTER TABLE "auth_sessions" ADD CONSTRAINT "auth_sessions_user_id_auth_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."auth_users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "password_resets" ADD CONSTRAINT "password_resets_user_id_auth_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."auth_users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "nwt_transactions" ADD CONSTRAINT "nwt_transactions_user_wallet_id_user_wallets_id_fk" FOREIGN KEY ("user_wallet_id") REFERENCES "public"."user_wallets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "payments" ADD CONSTRAINT "payments_user_wallet_id_user_wallets_id_fk" FOREIGN KEY ("user_wallet_id") REFERENCES "public"."user_wallets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "user_profiles" ADD CONSTRAINT "user_profiles_auth_user_id_auth_users_id_fk" FOREIGN KEY ("auth_user_id") REFERENCES "public"."auth_users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "wallet_addresses" ADD CONSTRAINT "wallet_addresses_user_wallet_id_user_wallets_id_fk" FOREIGN KEY ("user_wallet_id") REFERENCES "public"."user_wallets"("id") ON DELETE cascade ON UPDATE no action;
+ALTER TABLE "creator_profile" ADD CONSTRAINT "creator_profile_user_id_auth_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."auth_users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "reader_profile" ADD CONSTRAINT "reader_profile_user_id_auth_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."auth_users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "user_wallets" ADD CONSTRAINT "user_wallets_user_profile_id_user_profiles_id_fk" FOREIGN KEY ("user_profile_id") REFERENCES "public"."user_profiles"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "wallet_addresses" ADD CONSTRAINT "wallet_addresses_user_wallet_id_user_wallets_id_fk" FOREIGN KEY ("user_wallet_id") REFERENCES "public"."user_wallets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "loyalty_points" ADD CONSTRAINT "loyalty_points_user_id_auth_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."auth_users"("id") ON DELETE no action ON UPDATE no action;
