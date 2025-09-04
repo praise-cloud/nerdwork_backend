@@ -46,7 +46,6 @@ export const addReaderProfile = async (req, res) => {
         userId,
         genres,
         walletId,
-        pinHash,
       })
       .returning();
 

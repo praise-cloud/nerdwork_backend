@@ -1,20 +1,4 @@
 CREATE TYPE "public"."wallet_type_enum" AS ENUM('solana', 'phantom');--> statement-breakpoint
-CREATE TABLE "auth_users" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"email" text NOT NULL,
-	"username" text NOT NULL,
-	"email_verified" boolean DEFAULT false NOT NULL,
-	"two_factor_enabled" boolean DEFAULT false NOT NULL,
-	"last_login_at" timestamp,
-	"login_attempts" integer DEFAULT 0 NOT NULL,
-	"locked_until" timestamp,
-	"is_active" boolean DEFAULT true NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL,
-	CONSTRAINT "auth_users_email_unique" UNIQUE("email"),
-	CONSTRAINT "auth_users_username_unique" UNIQUE("username")
-);
---> statement-breakpoint
 CREATE TABLE "auth_sessions" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" uuid NOT NULL,
@@ -26,6 +10,22 @@ CREATE TABLE "auth_sessions" (
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "auth_sessions_session_token_unique" UNIQUE("session_token"),
 	CONSTRAINT "auth_sessions_refresh_token_unique" UNIQUE("refresh_token")
+);
+--> statement-breakpoint
+CREATE TABLE "auth_users" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"email" text NOT NULL,
+	"username" text NOT NULL,
+	"email_verified" boolean DEFAULT false NOT NULL,
+	"two_factor_enabled" boolean DEFAULT false NOT NULL,
+	"last_login_at" timestamp DEFAULT null,
+	"locked_until" timestamp DEFAULT null,
+	"login_attempts" integer DEFAULT 0 NOT NULL,
+	"is_active" boolean DEFAULT true NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "auth_users_email_unique" UNIQUE("email"),
+	CONSTRAINT "auth_users_username_unique" UNIQUE("username")
 );
 --> statement-breakpoint
 CREATE TABLE "password_resets" (
@@ -74,23 +74,6 @@ CREATE TABLE "payments" (
 	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
-CREATE TABLE "user_profiles" (
-	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
-	"auth_user_id" uuid NOT NULL,
-	"first_name" text,
-	"last_name" text,
-	"display_name" text NOT NULL,
-	"bio" text,
-	"avatar_url" text,
-	"date_of_birth" timestamp,
-	"country" text,
-	"timezone" text,
-	"language" text NOT NULL,
-	"preferences" json NOT NULL,
-	"created_at" timestamp DEFAULT now() NOT NULL,
-	"updated_at" timestamp DEFAULT now() NOT NULL
-);
---> statement-breakpoint
 CREATE TABLE "creator_profile" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" uuid NOT NULL,
@@ -110,13 +93,30 @@ CREATE TABLE "creator_profile" (
 CREATE TABLE "reader_profile" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" uuid NOT NULL,
-	"genre" text NOT NULL,
+	"genres" text[] DEFAULT '{}'::text[] NOT NULL,
 	"wallet_id" varchar(12) NOT NULL,
 	"pin_hash" text,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "reader_profile_user_id_unique" UNIQUE("user_id"),
 	CONSTRAINT "reader_profile_wallet_id_unique" UNIQUE("wallet_id")
+);
+--> statement-breakpoint
+CREATE TABLE "user_profiles" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"auth_user_id" uuid NOT NULL,
+	"first_name" text,
+	"last_name" text,
+	"display_name" text NOT NULL,
+	"bio" text,
+	"avatar_url" text,
+	"date_of_birth" timestamp,
+	"country" text,
+	"timezone" text,
+	"language" text NOT NULL,
+	"preferences" json NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "user_wallets" (
@@ -156,9 +156,9 @@ ALTER TABLE "auth_sessions" ADD CONSTRAINT "auth_sessions_user_id_auth_users_id_
 ALTER TABLE "password_resets" ADD CONSTRAINT "password_resets_user_id_auth_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."auth_users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "nwt_transactions" ADD CONSTRAINT "nwt_transactions_user_wallet_id_user_wallets_id_fk" FOREIGN KEY ("user_wallet_id") REFERENCES "public"."user_wallets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "payments" ADD CONSTRAINT "payments_user_wallet_id_user_wallets_id_fk" FOREIGN KEY ("user_wallet_id") REFERENCES "public"."user_wallets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "user_profiles" ADD CONSTRAINT "user_profiles_auth_user_id_auth_users_id_fk" FOREIGN KEY ("auth_user_id") REFERENCES "public"."auth_users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "creator_profile" ADD CONSTRAINT "creator_profile_user_id_auth_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."auth_users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "reader_profile" ADD CONSTRAINT "reader_profile_user_id_auth_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."auth_users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "user_profiles" ADD CONSTRAINT "user_profiles_auth_user_id_auth_users_id_fk" FOREIGN KEY ("auth_user_id") REFERENCES "public"."auth_users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "user_wallets" ADD CONSTRAINT "user_wallets_user_profile_id_user_profiles_id_fk" FOREIGN KEY ("user_profile_id") REFERENCES "public"."user_profiles"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "wallet_addresses" ADD CONSTRAINT "wallet_addresses_user_wallet_id_user_wallets_id_fk" FOREIGN KEY ("user_wallet_id") REFERENCES "public"."user_wallets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "loyalty_points" ADD CONSTRAINT "loyalty_points_user_id_auth_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."auth_users"("id") ON DELETE no action ON UPDATE no action;
