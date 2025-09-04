@@ -13,7 +13,6 @@ import { userProfiles } from "./profile";
 // ================================
 // USERS TABLE (AuthUser)
 // ================================
-
 export const authUsers = pgTable("auth_users", {
   id: uuid("id").primaryKey().defaultRandom(), // UUID
   email: text("email").notNull().unique(),
@@ -21,10 +20,13 @@ export const authUsers = pgTable("auth_users", {
   passwordHash: text("password_hash"),
   emailVerified: boolean("email_verified").notNull().default(false),
   twoFactorEnabled: boolean("two_factor_enabled").notNull().default(false),
-  lastLoginAt: timestamp("last_login_at", { mode: "date" }),
+
+  lastLoginAt: timestamp("last_login_at", { mode: "date" }).default(null),
+  lockedUntil: timestamp("locked_until", { mode: "date" }).default(null),
   loginAttempts: integer("login_attempts").notNull().default(0),
-  lockedUntil: timestamp("locked_until", { mode: "date" }),
+
   isActive: boolean("is_active").notNull().default(true),
+
   createdAt: timestamp("created_at", { mode: "date" }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
 });
