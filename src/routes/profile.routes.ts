@@ -127,7 +127,6 @@ router.post("/", getProfile);
  *       404:
  *         description: Profile not found
  */
-
 /**
  * @swagger
  * /api/profile/reader:
@@ -143,18 +142,16 @@ router.post("/", getProfile);
  *             required:
  *               - userId
  *               - genres
- *               - pin
  *             properties:
  *               userId:
  *                 type: string
  *                 format: uuid
  *                 example: "5c2f7df9-1d21-49f3-90d6-65b3e94bbfc2"
  *               genres:
- *                 type: string
- *                 example: "romance,adventure"
- *               pin:
- *                 type: string
- *                 example: "1234"
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["romance", "adventure", "sci-fi"]
  *     responses:
  *       200:
  *         description: Reader profile successfully created
