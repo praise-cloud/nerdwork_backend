@@ -70,7 +70,7 @@ export const googleAuthController = async (req, res) => {
     return res.json({ token, user, isNewUser });
   } catch (err) {
     console.error(err);
-    return res.status(401).json({ message: "Google authentication failed" });
+    return res.status(401).json({ message: err });
   }
 };
 
