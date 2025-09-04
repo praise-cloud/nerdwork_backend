@@ -35,7 +35,7 @@ export const addReaderProfile = async (req, res) => {
     const { userId, genres } = req.body;
 
     // Generate walletId (12 chars)
-    const walletId = crypto.randomBytes(12).toString("hex");
+    const walletId = crypto.randomBytes(6).toString("hex");
 
     // Hash pin
     // const pinHash = crypto.createHash("sha256").update(pin).digest("hex");
