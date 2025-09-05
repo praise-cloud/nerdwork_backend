@@ -8,12 +8,13 @@ class AWSS3Service {
 
   constructor() {
     this.s3 = new S3Client({
-      region: process.env.AWS_REGION || "us-east-1",
+      region: process.env.AWS_REGION || "us-west-1",
       credentials: {
         accessKeyId: process.env.AWS_ACCESS_KEY_ID || "",
         secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY || "",
       },
     });
+    console.log("region", process.env.AWS_REGION);
 
     this.bucketName = process.env.S3_BUCKET_NAME || "";
     this.cloudFrontDomain = process.env.CLOUDFRONT_DOMAIN;
