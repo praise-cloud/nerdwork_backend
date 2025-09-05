@@ -1,7 +1,7 @@
 import { Router } from "express";
 import {
   createComic,
-  fetchAllComicByJwt,
+  // fetchAllComicByJwt,
   fetchAllComics,
   fetchComicBySlug,
 } from "../controller/comic.controller";
