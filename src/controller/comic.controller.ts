@@ -103,7 +103,7 @@ export const fetchComicBySlug = async (req, res) => {
 // ✅ Fetch all comics (reader endpoint)
 export const fetchAllComics = async (req, res) => {
   try {
-    console.log("AllComics", allComics);
+    console.log("AllComics");
     const allComics = await db.select().from(comics);
     console.log("AllComics", allComics);
 
