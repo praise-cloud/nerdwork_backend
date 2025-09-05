@@ -53,37 +53,37 @@ export const createComic = async (req, res) => {
   }
 };
 
-// export const fetchAllComicByJwt = async (req, res) => {
-//   try {
-//     const authHeader = req.headers.authorization;
-//     if (!authHeader || !authHeader.startsWith("Bearer ")) {
-//       return res.status(401).json({ message: "Unauthorized" });
-//     }
+export const fetchAllComicByJwt = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
 
-//     const token = authHeader.split(" ")[1];
-//     const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
+    const token = authHeader.split(" ")[1];
+    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
 
-//     const userId = decoded.userId;
+    const userId = decoded.userId;
 
-//     const [creator] = await db
-//       .select()
-//       .from(creatorProfile)
-//       .where(eq(creatorProfile.userId, userId));
-//     if (!creator) {
-//       return res.status(404).json({ message: "Creator With Jwt not found" });
-//     }
+    const [creator] = await db
+      .select()
+      .from(creatorProfile)
+      .where(eq(creatorProfile.userId, userId));
+    if (!creator) {
+      return res.status(404).json({ message: "Creator With Jwt not found" });
+    }
 
-//     const userComics = await db
-//       .select()
-//       .from(comics)
-//       .where(eq(comics.creatorId, creator.id));
+    const userComics = await db
+      .select()
+      .from(comics)
+      .where(eq(comics.creatorId, creator.id));
 
-//     return res.json({ comics: userComics });
-//   } catch (err) {
-//     console.error(err);
-//     return res.status(400).json({ message: "Failed to fetch comics" });
-//   }
-// };
+    return res.json({ comics: userComics });
+  } catch (err) {
+    console.error(err);
+    return res.status(400).json({ message: "Failed to fetch comics" });
+  }
+};
 
 export const fetchComicBySlug = async (req, res) => {
   try {
@@ -103,6 +103,7 @@ export const fetchComicBySlug = async (req, res) => {
 // ✅ Fetch all comics (reader endpoint)
 export const fetchAllComics = async (req, res) => {
   try {
+    console.log("AllComics", allComics);
     const allComics = await db.select().from(comics);
     console.log("AllComics", allComics);
 
