@@ -17,6 +17,7 @@ class AWSS3Service {
 
     this.bucketName = process.env.S3_BUCKET_NAME || "";
     this.cloudFrontDomain = process.env.CLOUDFRONT_DOMAIN;
+    console.log("bucketName", this.bucketName);
   }
 
   async uploadFile(file: Express.Multer.File, folder = "uploads") {
