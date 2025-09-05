@@ -9,7 +9,7 @@ import {
 const router = Router();
 
 router.post("/create", createComic);
-router.get("/mine", fetchAllComicByJwt);
+// router.get("/mine", fetchAllComicByJwt);
 router.get("/:slug", fetchComicBySlug);
 router.get("/all", fetchAllComics);
 
