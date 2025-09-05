@@ -1,45 +1,33 @@
 import { Router } from "express";
-import { authenticate } from "../middleware/common/auth";
-import { getPresignedUploadUrl } from "../controller/file.controller";
+import multer from "multer";
+import { uploadToS3 } from "../controller/file.controller";
 
 const router = Router();
 
 /**
  * @swagger
- * /file-upload/presigned-url:
+ * /file-upload/media:
  *   post:
- *     summary: Get a presigned S3 upload URL
- *     description: Generates a presigned URL for direct upload to AWS S3. Requires authentication.
- *     tags: [Uploads]
- *     security:
- *       - bearerAuth: []
+ *     summary: Upload a file to AWS S3
+ *     description: Receives a file, uploads it to AWS S3, and returns the public URL for storage in the database.
+ *     tags:
+ *       - File Upload
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
  *             type: object
  *             required:
- *               - filename
- *               - contentType
+ *               - file
  *             properties:
- *               filename:
+ *               file:
  *                 type: string
- *                 example: "profile-picture.png"
- *               contentType:
- *                 type: string
- *                 example: "image/png"
- *               category:
- *                 type: string
- *                 default: "general"
- *                 example: "comics"
- *               purpose:
- *                 type: string
- *                 default: "storage"
- *                 example: "avatar"
+ *                 format: binary
+ *                 description: The file to be uploaded
  *     responses:
  *       200:
- *         description: Presigned URL successfully generated
+ *         description: File uploaded successfully
  *         content:
  *           application/json:
  *             schema:
@@ -48,35 +36,45 @@ const router = Router();
  *                 success:
  *                   type: boolean
  *                   example: true
- *                 data:
- *                   type: object
- *                   properties:
- *                     url:
- *                       type: string
- *                       description: The presigned S3 upload URL
- *                       example: "https://bucket-name.s3.amazonaws.com/..."
- *                     fields:
- *                       type: object
- *                       description: Form fields required for upload (if using POST upload)
- *                     s3Key:
- *                       type: string
- *                       description: S3 object key for the uploaded file
- *                       example: "comics/12345/profile-picture.png"
- *                     cdnUrl:
- *                       type: string
- *                       description: Public CDN URL to access the uploaded file
- *                       example: "https://cdn.example.com/comics/12345/profile-picture.png"
+ *                 url:
+ *                   type: string
+ *                   example: "https://cdn.example.com/media/1234abcd-image.png"
  *                 message:
  *                   type: string
- *                   example: "Presigned upload URL generated successfully"
+ *                   example: File uploaded successfully
  *       400:
- *         description: Missing filename or contentType
- *       401:
- *         description: Unauthorized - Authentication required
+ *         description: Bad request, no file provided
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: No file uploaded
  *       500:
  *         description: Internal server error
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 error:
+ *                   type: string
+ *                   example: Internal server error
  */
 
-router.post("/presigned-url", authenticate, getPresignedUploadUrl);
+// Multer memory storage (no disk, file kept in buffer)
+const storage = multer.memoryStorage();
+const upload = multer({ storage });
+
+// Endpoint
+router.post("/media", upload.single("file"), uploadToS3);
 
 export default router;
