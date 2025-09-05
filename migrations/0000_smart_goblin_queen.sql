@@ -93,6 +93,7 @@ CREATE TABLE "creator_profile" (
 CREATE TABLE "reader_profile" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" uuid NOT NULL,
+	"full_name" text NOT NULL,
 	"genres" text[] DEFAULT '{}'::text[] NOT NULL,
 	"wallet_id" varchar(12) NOT NULL,
 	"pin_hash" text,

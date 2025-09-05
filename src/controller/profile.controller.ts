@@ -32,7 +32,7 @@ export const addCreatorProfile = async (req, res) => {
 
 export const addReaderProfile = async (req, res) => {
   try {
-    const { userId, genres } = req.body;
+    const { userId, genres, fullName } = req.body;
 
     // Generate walletId (12 chars)
     const walletId = crypto.randomBytes(6).toString("hex");
@@ -45,6 +45,7 @@ export const addReaderProfile = async (req, res) => {
       .values({
         userId,
         genres,
+        fullName,
         walletId,
       })
       .returning();

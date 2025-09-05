@@ -71,6 +71,8 @@ export const readerProfile = pgTable("reader_profile", {
     .unique()
     .references(() => authUsers.id, { onDelete: "cascade" }),
 
+  fullName: text("full_name").notNull(),
+
   genres: text("genres")
     .array()
     .notNull()

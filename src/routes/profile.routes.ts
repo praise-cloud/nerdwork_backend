@@ -113,12 +113,16 @@ router.get("/reader", getReaderProfile);
  *             type: object
  *             required:
  *               - userId
+ *               - fullName
  *               - genres
  *             properties:
  *               userId:
  *                 type: string
  *                 format: uuid
  *                 example: "5c2f7df9-1d21-49f3-90d6-65b3e94bbfc2"
+ *               fullName:
+ *                 type: string
+ *                 example: "John Doe"
  *               genres:
  *                 type: array
  *                 items:
