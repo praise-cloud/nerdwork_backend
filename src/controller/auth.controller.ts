@@ -42,7 +42,7 @@ export const googleAuthController = async (req, res) => {
         .values({
           email,
           username: email.split("@")[0],
-          emailVerified: true,
+          emailVerified: false,
           isActive: true,
         })
         .returning();
@@ -62,9 +62,7 @@ export const googleAuthController = async (req, res) => {
       .where(eq(readerProfile.userId, user.id));
 
     const cProfile = !!creator;
-    console.log("cProfile", cProfile);
     const rProfile = !!reader;
-    console.log("rProfile", rProfile);
 
     // ✅ Generate JWT
     const token = jwt.sign(
