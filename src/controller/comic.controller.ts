@@ -70,7 +70,10 @@ export const fetchAllComicByJwt = async (req, res) => {
       .from(creatorProfile)
       .where(eq(creatorProfile.userId, userId));
 
-    if (!!creator) {
+    console.log("Creator", creator);
+    console.log("user", userId);
+
+    if (!creator) {
       return res.status(404).json({ message: "Creator With Jwt not found" });
     }
 

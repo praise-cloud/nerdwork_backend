@@ -2,6 +2,7 @@ import { Router } from "express";
 import {
   createComic,
   fetchAllComicByJwt,
+  fetchAllComics,
   fetchComicBySlug,
 } from "../controller/comic.controller";
 
@@ -10,6 +11,7 @@ const router = Router();
 router.post("/create", createComic);
 router.get("/mine", fetchAllComicByJwt);
 router.get("/:slug", fetchComicBySlug);
+router.get("/all", fetchAllComics);
 
 /**
  * @swagger
