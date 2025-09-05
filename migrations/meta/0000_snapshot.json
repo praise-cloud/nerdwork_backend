@@ -1,5 +1,5 @@
 {
-  "id": "11239f9b-0d7c-4c91-8472-0fb4abf8385a",
+  "id": "03a09de1-2abc-42e8-910f-84929710e522",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -573,6 +573,13 @@
           "primaryKey": false,
           "notNull": false
         },
+        "wallet_balance": {
+          "name": "wallet_balance",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
+        },
         "pin_hash": {
           "name": "pin_hash",
           "type": "text",
@@ -659,6 +666,13 @@
           "type": "varchar(12)",
           "primaryKey": false,
           "notNull": true
+        },
+        "wallet_balance": {
+          "name": "wallet_balance",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
         },
         "pin_hash": {
           "name": "pin_hash",

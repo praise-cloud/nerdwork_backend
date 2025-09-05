@@ -11,7 +11,7 @@ const router = Router();
 router.post("/create", createComic);
 router.get("/mine", fetchAllComicByJwt);
 router.get("/:slug", fetchComicBySlug);
-router.get("/all", fetchAllComics);
+router.get("/all-comics", fetchAllComics);
 
 /**
  * @swagger
@@ -142,7 +142,7 @@ router.get("/all", fetchAllComics);
 
 /**
  * @swagger
- * /comics/all:
+ * /comics/all-comics:
  *   get:
  *     summary: Fetch all comics (reader view)
  *     tags: [Comics]

@@ -90,6 +90,7 @@ export const fetchComicBySlug = async (req, res) => {
     const { slug } = req.params;
 
     const [comic] = await db.select().from(comics).where(eq(comics.slug, slug));
+    console.log("comic found");
 
     if (!comic) return res.status(404).json({ message: "Comic not found" });
 
