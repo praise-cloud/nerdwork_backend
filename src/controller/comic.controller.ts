@@ -69,10 +69,6 @@ export const fetchAllComicByJwt = async (req, res) => {
       .select()
       .from(creatorProfile)
       .where(eq(creatorProfile.userId, userId));
-
-    console.log("Creator", creator);
-    console.log("user", userId);
-
     if (!creator) {
       return res.status(404).json({ message: "Creator With Jwt not found" });
     }
@@ -108,6 +104,8 @@ export const fetchComicBySlug = async (req, res) => {
 export const fetchAllComics = async (req, res) => {
   try {
     const allComics = await db.select().from(comics);
+    console.log("AllComics", allComics);
+
     return res.json({ comics: allComics });
   } catch (err) {
     console.error(err);
