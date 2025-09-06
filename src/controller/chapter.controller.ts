@@ -20,6 +20,7 @@ export const createChapter = async (req, res) => {
         chapterType,
         price: finalPrice,
         summary,
+        chapterStatus: "published",
         pages,
         comicId,
         uniqueCode,
