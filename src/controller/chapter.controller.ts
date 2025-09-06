@@ -104,6 +104,8 @@ export const fetchChaptersByComicSlug = async (req, res) => {
       .from(chapters)
       .where(eq(chapters.comicId, comic.id));
 
+    console.log("All chapter", allChapters);
+
     return res.status(200).json({
       success: true,
       data: allChapters,
