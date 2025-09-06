@@ -4,6 +4,8 @@ import {
   addReaderProfile,
   getCreatorProfile,
   getReaderProfile,
+  updateCreatorProfilePin,
+  updateReaderProfilePin,
 } from "../controller/profile.controller";
 
 const router = express.Router();
@@ -38,6 +40,22 @@ router.get("/creator", getCreatorProfile);
  */
 
 router.get("/reader", getReaderProfile);
+
+/**
+ * @route   PUT /profile/reader/pin
+ * @desc    update Reader Profile pin
+ * @access  Private (Jwt required)
+ */
+
+router.put("/reader/pin", updateReaderProfilePin);
+
+/**
+ * @route   PUT /profile/creator/pin
+ * @desc    update Creator Profile pin
+ * @access  Private (Jwt required)
+ */
+
+router.get("/creator/pin", updateCreatorProfilePin);
 
 /**
  * @swagger
@@ -295,7 +313,7 @@ router.get("/reader", getReaderProfile);
  *     tags:
  *       - Reader Profile
  *     security:
- *       - bearerAuth: []   # 🔑 Requires JWT
+ *       - bearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
