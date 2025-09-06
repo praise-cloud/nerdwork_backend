@@ -1,4 +1,5 @@
 CREATE TYPE "public"."wallet_type_enum" AS ENUM('solana', 'phantom');--> statement-breakpoint
+CREATE TYPE "public"."chapter_type" AS ENUM('free', 'paid');--> statement-breakpoint
 CREATE TABLE "auth_sessions" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"user_id" uuid NOT NULL,
@@ -160,6 +161,8 @@ CREATE TABLE "comics" (
 	"title" varchar(255) NOT NULL,
 	"language" varchar(50) NOT NULL,
 	"age_rating" varchar(10) NOT NULL,
+	"no_of_chapters" integer DEFAULT 0 NOT NULL,
+	"no_of_drafts" integer DEFAULT 0 NOT NULL,
 	"description" text NOT NULL,
 	"image_url" text NOT NULL,
 	"genre" text[] NOT NULL,
@@ -169,6 +172,34 @@ CREATE TABLE "comics" (
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
 	CONSTRAINT "comics_slug_unique" UNIQUE("slug")
+);
+--> statement-breakpoint
+CREATE TABLE "chapters" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"title" varchar(255) NOT NULL,
+	"chapter_type" "chapter_type" DEFAULT 'free' NOT NULL,
+	"price" integer DEFAULT 0 NOT NULL,
+	"summary" text,
+	"pages" text[] NOT NULL,
+	"comic_id" integer NOT NULL,
+	"unique_code" varchar(4) NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "chapters_unique_code_unique" UNIQUE("unique_code")
+);
+--> statement-breakpoint
+CREATE TABLE "draft_chapters" (
+	"id" serial PRIMARY KEY NOT NULL,
+	"title" varchar(255) NOT NULL,
+	"chapter_type" "chapter_type" DEFAULT 'free' NOT NULL,
+	"price" integer DEFAULT 0 NOT NULL,
+	"summary" text,
+	"pages" text[] NOT NULL,
+	"comic_id" integer NOT NULL,
+	"unique_code" varchar(4) NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL,
+	CONSTRAINT "draft_chapters_unique_code_unique" UNIQUE("unique_code")
 );
 --> statement-breakpoint
 ALTER TABLE "auth_sessions" ADD CONSTRAINT "auth_sessions_user_id_auth_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."auth_users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -181,4 +212,6 @@ ALTER TABLE "user_profiles" ADD CONSTRAINT "user_profiles_auth_user_id_auth_user
 ALTER TABLE "user_wallets" ADD CONSTRAINT "user_wallets_user_profile_id_user_profiles_id_fk" FOREIGN KEY ("user_profile_id") REFERENCES "public"."user_profiles"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "wallet_addresses" ADD CONSTRAINT "wallet_addresses_user_wallet_id_user_wallets_id_fk" FOREIGN KEY ("user_wallet_id") REFERENCES "public"."user_wallets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "loyalty_points" ADD CONSTRAINT "loyalty_points_user_id_auth_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."auth_users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "comics" ADD CONSTRAINT "comics_creator_id_creator_profile_id_fk" FOREIGN KEY ("creator_id") REFERENCES "public"."creator_profile"("id") ON DELETE cascade ON UPDATE no action;
+ALTER TABLE "comics" ADD CONSTRAINT "comics_creator_id_creator_profile_id_fk" FOREIGN KEY ("creator_id") REFERENCES "public"."creator_profile"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "chapters" ADD CONSTRAINT "chapters_comic_id_comics_id_fk" FOREIGN KEY ("comic_id") REFERENCES "public"."comics"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "draft_chapters" ADD CONSTRAINT "draft_chapters_comic_id_comics_id_fk" FOREIGN KEY ("comic_id") REFERENCES "public"."comics"("id") ON DELETE cascade ON UPDATE no action;

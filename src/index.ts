@@ -8,6 +8,7 @@ import nftRoutes from "./routes/nft.routes";
 import walletRoutes from "./routes/wallet.routes";
 import profileRoutes from "./routes/profile.routes";
 import comicRoutes from "./routes/comic.routes";
+import chapterRoutes from "./routes/chapter.routes";
 import fileRoutes from "./routes/files.routes";
 
 app.use("/auth", authRoutes);
@@ -16,6 +17,7 @@ app.use("/nft", authenticate, nftRoutes);
 app.use("/wallet", authenticate, walletRoutes);
 app.use("/profile", profileRoutes);
 app.use("/comics", comicRoutes);
+app.use("/chapters", chapterRoutes);
 app.use("/file-upload", fileRoutes);
 
 const PORT = 5000;

@@ -1,4 +1,11 @@
-import { pgTable, uuid, varchar, text, timestamp } from "drizzle-orm/pg-core";
+import {
+  pgTable,
+  uuid,
+  varchar,
+  text,
+  timestamp,
+  integer,
+} from "drizzle-orm/pg-core";
 import { creatorProfile } from "./profile";
 
 export const comics = pgTable("comics", {
@@ -6,6 +13,8 @@ export const comics = pgTable("comics", {
   title: varchar("title", { length: 255 }).notNull(),
   language: varchar("language", { length: 50 }).notNull(),
   ageRating: varchar("age_rating", { length: 10 }).notNull(),
+  noOfChapters: integer("no_of_chapters").notNull().default(0),
+  noOfDrafts: integer("no_of_drafts").notNull().default(0),
   description: text("description").notNull(),
   image: text("image_url").notNull(),
   genre: text("genre").array().notNull(),

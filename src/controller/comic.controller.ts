@@ -28,7 +28,7 @@ export const createComic = async (req, res) => {
     }
 
     const slug = `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${
-      decoded.email
+      creator.creatorName
     }`;
 
     const [comic] = await db
