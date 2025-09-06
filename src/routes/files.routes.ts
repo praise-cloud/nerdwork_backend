@@ -8,8 +8,10 @@ const router = Router();
  * @swagger
  * /file-upload/media:
  *   post:
- *     summary: Upload a file to AWS S3
- *     description: Receives a file, uploads it to AWS S3, and returns the public URL for storage in the database.
+ *     summary: Upload a media file to AWS S3 (served via CloudFront)
+ *     description: >
+ *       Receives a media file, uploads it to the configured S3 bucket, and returns a public CloudFront URL.
+ *       The returned URL is safe to store in your database and can be used to directly serve the media.
  *     tags:
  *       - File Upload
  *     requestBody:
@@ -38,7 +40,7 @@ const router = Router();
  *                   example: true
  *                 url:
  *                   type: string
- *                   example: "https://cdn.example.com/media/1234abcd-image.png"
+ *                   example: "https://cdn.interspace.africa/media/1234abcd-image.png"
  *                 message:
  *                   type: string
  *                   example: File uploaded successfully

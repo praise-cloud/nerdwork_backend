@@ -84,16 +84,15 @@
 //     });
 //   }
 // };
+import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 
-import { S3 } from "aws-sdk";
-
-// initialize S3 client
-const s3 = new S3({
-  region: process.env.AWS_REGION || "eu-west-1",
-  accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-  secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+const s3 = new S3Client({
+  region: process.env.AWS_REGION,
+  credentials: {
+    accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
+    secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
+  },
 });
-
 export const uploadToS3 = async (req: any, res: any) => {
   try {
     if (!req.file) {
@@ -102,33 +101,29 @@ export const uploadToS3 = async (req: any, res: any) => {
         .json({ success: false, error: "No file uploaded" });
     }
 
-    // unique key for the file in the bucket
-    const key = `media/${Date.now()}-${req.file.originalname}`;
+    const file = req.file;
+    const key = `media/${Date.now()}-${file.originalname}`;
 
-    const params = {
+    const command = new PutObjectCommand({
       Bucket: process.env.S3_BUCKET_NAME!,
       Key: key,
-      Body: req.file.buffer,
-      ContentType: req.file.mimetype,
-      ACL: "public-read", // 👈 ensures file is publicly accessible
-    };
+      Body: file.buffer,
+      ContentType: file.mimetype,
+    });
 
-    // Upload file to S3
-    await s3.upload(params).promise();
+    await s3.send(command);
 
-    // Construct public URL (can also use CloudFront domain if you have one)
-    const url = `https://${process.env.CLOUDFRONT_DOMAIN}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+    const fileUrl = `https://${process.env.CLOUDFRONT_DOMAIN}/${key}`;
 
     return res.status(200).json({
       success: true,
-      url,
+      url: fileUrl,
       message: "File uploaded successfully",
     });
   } catch (error) {
     console.error("Upload error:", error);
-    return res.status(500).json({
-      success: false,
-      error: "Internal server error",
-    });
+    return res
+      .status(500)
+      .json({ success: false, error: "Internal server error" });
   }
 };
