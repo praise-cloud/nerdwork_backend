@@ -85,46 +85,57 @@
 //   }
 // };
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import path from "path";
 
-const s3 = new S3Client({
-  region: process.env.AWS_REGION,
+// S3 client
+const s3Client = new S3Client({
+  region: process.env.AWS_REGION!,
   credentials: {
     accessKeyId: process.env.AWS_ACCESS_KEY_ID!,
     secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY!,
   },
 });
+
 export const uploadToS3 = async (req: any, res: any) => {
   try {
     if (!req.file) {
-      return res
-        .status(400)
-        .json({ success: false, error: "No file uploaded" });
+      return res.status(400).json({
+        success: false,
+        error: "No file uploaded",
+      });
     }
 
     const file = req.file;
-    const key = `media/${Date.now()}-${file.originalname}`;
+    const fileExtension = path.extname(file.originalname);
+    const key = `media/${Date.now()}-${Math.random()
+      .toString(36)
+      .substring(7)}${fileExtension}`;
 
+    // Upload without ACL
     const command = new PutObjectCommand({
-      Bucket: process.env.S3_BUCKET_NAME!,
+      Bucket: process.env.AWS_S3_BUCKET!,
       Key: key,
       Body: file.buffer,
       ContentType: file.mimetype,
-      ACL: "public-read",
     });
 
-    await s3.send(command);
+    await s3Client.send(command);
 
-    const fileUrl = `https://${process.env.S3_BUCKET_NAME}/${key}`;
+    // Build CloudFront or fallback S3 URL
+    const publicUrl = process.env.AWS_CLOUDFRONT_DOMAIN
+      ? `${process.env.AWS_CLOUDFRONT_DOMAIN}/${key}`
+      : `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
 
     return res.status(200).json({
       success: true,
-      url: fileUrl,
+      url: publicUrl,
       message: "File uploaded successfully",
     });
   } catch (error) {
     console.error("Upload error:", error);
-    return res
-      .status(500)
-      .json({ success: false, error: "Internal server error" });
+    return res.status(500).json({
+      success: false,
+      error: "Internal server error",
+    });
   }
 };
