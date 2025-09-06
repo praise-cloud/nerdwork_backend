@@ -102,14 +102,40 @@ export const fetchComicBySlug = async (req, res) => {
   }
 };
 
+export const fetchComicBySlugForReaders = async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    const [comic] = await db.select().from(comics).where(eq(comics.slug, slug));
+    if (!comic) return res.status(404).json({ message: "Comic not found" });
+
+    const [creator] = await db
+      .select()
+      .from(creatorProfile)
+      .where(eq(creatorProfile.id, comic.creatorId));
+
+    return res.json({
+      data: {
+        comic,
+        creatorName: creator.creatorName,
+        isInLibrary: false,
+      },
+    });
+  } catch (err) {
+    console.error(err);
+    return res.status(400).json({ message: "Failed to fetch comic" });
+  }
+};
+
 // ✅ Fetch all comics (reader endpoint)
 export const fetchAllComics = async (req, res) => {
   try {
-    console.log("AllComics");
-    const allComics = await db.select().from(comics);
-    console.log("AllComics", allComics);
+    const publishedComics = await db
+      .select()
+      .from(comics)
+      .where(eq(comics.comicStatus, "published"));
 
-    return res.json({ comics: allComics });
+    return res.json({ comics: publishedComics });
   } catch (err) {
     console.error(err);
     return res.status(400).json({ message: "Failed to fetch comics" });
