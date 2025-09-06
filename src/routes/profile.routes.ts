@@ -219,6 +219,144 @@ router.get("/reader", getReaderProfile);
 
 /**
  * @swagger
+ * /profile/reader/pin:
+ *   put:
+ *     summary: Update reader profile PIN
+ *     description: Updates the reader profile PIN for the authenticated user. The PIN is securely hashed before storing.
+ *     tags:
+ *       - Reader Profile
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - pin
+ *             properties:
+ *               pin:
+ *                 type: string
+ *                 description: 4+ digit PIN to set for the profile
+ *                 example: "1234"
+ *     responses:
+ *       200:
+ *         description: PIN updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "PIN updated successfully"
+ *       400:
+ *         description: Invalid request (e.g., missing or too short PIN)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "PIN must be at least 4 digits"
+ *       401:
+ *         description: Unauthorized (missing/invalid token)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Unauthorized"
+ *       404:
+ *         description: Reader profile not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Profile not found"
+ */
+
+/**
+ * @swagger
+ * /profile/creator/pin:
+ *   put:
+ *     summary: Update reader profile PIN
+ *     description: Updates the reader profile PIN for the authenticated user. The PIN is securely hashed before storing.
+ *     tags:
+ *       - Reader Profile
+ *     security:
+ *       - bearerAuth: []   # 🔑 Requires JWT
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - pin
+ *             properties:
+ *               pin:
+ *                 type: string
+ *                 description: 4+ digit PIN to set for the profile
+ *                 example: "1234"
+ *     responses:
+ *       200:
+ *         description: PIN updated successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: "PIN updated successfully"
+ *       400:
+ *         description: Invalid request (e.g., missing or too short PIN)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "PIN must be at least 4 digits"
+ *       401:
+ *         description: Unauthorized (missing/invalid token)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Unauthorized"
+ *       404:
+ *         description: Reader profile not found
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: "Profile not found"
+ */
+
+/**
+ * @swagger
  * components:
  *   schemas:
  *     CreatorProfile:
