@@ -57,8 +57,8 @@ router.post("/draft", createDraft);
  *                   type: string
  *                 example: ["page1.png", "page2.png"]
  *               comicId:
- *                 type: integer
- *                 example: 1
+ *                 type: uuid
+ *                 example: "4878476e-098d-4c87-b5ba-b2aedf13f43b"
  *     responses:
  *       201:
  *         description: Chapter created successfully
@@ -98,7 +98,7 @@ router.post("/draft", createDraft);
  *                 items:
  *                   type: string
  *               comicId:
- *                 type: integer
+ *                 type: uuid
  *     responses:
  *       201:
  *         description: Draft chapter created successfully
@@ -154,7 +154,7 @@ router.post("/draft", createDraft);
  *       - in: path
  *         name: chapterId
  *         schema:
- *           type: integer
+ *           type: uuid
  *         required: true
  *         description: The ID of the chapter
  *     responses:
