@@ -122,9 +122,9 @@ export const uploadToS3 = async (req: any, res: any) => {
     await s3Client.send(command);
 
     // Build CloudFront or fallback S3 URL
-    const publicUrl = process.env.AWS_CLOUDFRONT_DOMAIN
-      ? `${process.env.AWS_CLOUDFRONT_DOMAIN}/${key}`
-      : `https://${process.env.AWS_S3_BUCKET}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+    const publicUrl = process.env.CLOUDFRONT_DOMAIN
+      ? `${process.env.CLOUDFRONT_DOMAIN}/${key}`
+      : `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
 
     return res.status(200).json({
       success: true,
