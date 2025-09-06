@@ -6,6 +6,7 @@ import {
   integer,
   varchar,
   pgEnum,
+  uuid,
 } from "drizzle-orm/pg-core";
 import { comics } from "./comic"; // assuming you already have comics entity
 
@@ -13,13 +14,13 @@ import { comics } from "./comic"; // assuming you already have comics entity
 export const chapterTypeEnum = pgEnum("chapter_type", ["free", "paid"]);
 
 export const chapters = pgTable("chapters", {
-  id: serial("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
   title: varchar("title", { length: 255 }).notNull(),
   chapterType: chapterTypeEnum("chapter_type").default("free").notNull(),
   price: integer("price").default(0).notNull(),
   summary: text("summary"),
   pages: text("pages").array().notNull(), // array of page URLs
-  comicId: integer("comic_id")
+  comicId: uuid("comic_id")
     .notNull()
     .references(() => comics.id, { onDelete: "cascade" }),
   uniqueCode: varchar("unique_code", { length: 4 }).unique().notNull(),
@@ -28,13 +29,13 @@ export const chapters = pgTable("chapters", {
 });
 
 export const draftChapters = pgTable("draft_chapters", {
-  id: serial("id").primaryKey(),
+  id: uuid("id").primaryKey().defaultRandom(),
   title: varchar("title", { length: 255 }).notNull(),
   chapterType: chapterTypeEnum("chapter_type").default("free").notNull(),
   price: integer("price").default(0).notNull(),
   summary: text("summary"),
   pages: text("pages").array().notNull(),
-  comicId: integer("comic_id")
+  comicId: uuid("comic_id")
     .notNull()
     .references(() => comics.id, { onDelete: "cascade" }),
   uniqueCode: varchar("unique_code", { length: 4 }).unique().notNull(),

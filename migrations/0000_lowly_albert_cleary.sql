@@ -175,13 +175,13 @@ CREATE TABLE "comics" (
 );
 --> statement-breakpoint
 CREATE TABLE "chapters" (
-	"id" serial PRIMARY KEY NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"title" varchar(255) NOT NULL,
 	"chapter_type" "chapter_type" DEFAULT 'free' NOT NULL,
 	"price" integer DEFAULT 0 NOT NULL,
 	"summary" text,
 	"pages" text[] NOT NULL,
-	"comic_id" integer NOT NULL,
+	"comic_id" uuid NOT NULL,
 	"unique_code" varchar(4) NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
@@ -189,13 +189,13 @@ CREATE TABLE "chapters" (
 );
 --> statement-breakpoint
 CREATE TABLE "draft_chapters" (
-	"id" serial PRIMARY KEY NOT NULL,
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"title" varchar(255) NOT NULL,
 	"chapter_type" "chapter_type" DEFAULT 'free' NOT NULL,
 	"price" integer DEFAULT 0 NOT NULL,
 	"summary" text,
 	"pages" text[] NOT NULL,
-	"comic_id" integer NOT NULL,
+	"comic_id" uuid NOT NULL,
 	"unique_code" varchar(4) NOT NULL,
 	"created_at" timestamp DEFAULT now() NOT NULL,
 	"updated_at" timestamp DEFAULT now() NOT NULL,
