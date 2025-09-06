@@ -113,7 +113,7 @@ export const uploadToS3 = async (req: any, res: any) => {
 
     // Upload without ACL
     const command = new PutObjectCommand({
-      Bucket: process.env.AWS_S3_BUCKET!,
+      Bucket: process.env.S3_BUCKET_NAME!,
       Key: key,
       Body: file.buffer,
       ContentType: file.mimetype,
