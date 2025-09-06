@@ -1,6 +1,6 @@
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import { db } from "../config/db";
-import { chapters, draftChapters } from "../model/chapter";
+import { chapters } from "../model/chapter";
 import { comics } from "../model/comic";
 
 // ✅ Create Chapter
@@ -29,7 +29,10 @@ export const createChapter = async (req, res) => {
     // increment comic.noOfChapters
     await db
       .update(comics)
-      .set({ noOfChapters: (comics.noOfChapters as any) + 1 })
+      .set({
+        noOfChapters: sql`${comics.noOfChapters} + 1`,
+        comicStatus: "published",
+      })
       .where(eq(comics.id, comicId));
 
     return res.status(201).json({
@@ -53,7 +56,7 @@ export const createDraft = async (req, res) => {
 
     // insert chapter
     const [newChapter] = await db
-      .insert(draftChapters)
+      .insert(chapters)
       .values({
         title,
         chapterType,
@@ -61,6 +64,7 @@ export const createDraft = async (req, res) => {
         summary,
         pages,
         comicId,
+        chapterStatus: "draft",
         uniqueCode,
       })
       .returning();
@@ -68,7 +72,7 @@ export const createDraft = async (req, res) => {
     // increment comic.noOfDrafts
     await db
       .update(comics)
-      .set({ noOfDrafts: (comics.noOfDrafts as any) + 1 })
+      .set({ noOfDrafts: sql`${comics.noOfDrafts} + 1` })
       .where(eq(comics.id, comicId));
 
     return res.status(201).json({

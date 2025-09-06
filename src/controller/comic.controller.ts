@@ -42,6 +42,7 @@ export const createComic = async (req, res) => {
         slug,
         genre,
         tags,
+        comicStatus: "draft",
         creatorId: creator.id,
       })
       .returning();

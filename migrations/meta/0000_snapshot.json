@@ -1,5 +1,5 @@
 {
-  "id": "7aff5727-5ca1-4e56-9f03-1a67d7ef06ba",
+  "id": "183e30ac-a3e3-4f0b-b26a-6791c654402f",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1139,6 +1139,14 @@
           "primaryKey": false,
           "notNull": true
         },
+        "comic_status": {
+          "name": "comic_status",
+          "type": "comic_status_enum",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'draft'"
+        },
         "genre": {
           "name": "genre",
           "type": "text[]",
@@ -1252,6 +1260,14 @@
           "primaryKey": false,
           "notNull": true
         },
+        "chapter_status": {
+          "name": "chapter_status",
+          "type": "comic_status_enum",
+          "typeSchema": "public",
+          "primaryKey": false,
+          "notNull": false,
+          "default": "'draft'"
+        },
         "comic_id": {
           "name": "comic_id",
           "type": "uuid",
@@ -1308,107 +1324,6 @@
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
-    },
-    "public.draft_chapters": {
-      "name": "draft_chapters",
-      "schema": "",
-      "columns": {
-        "id": {
-          "name": "id",
-          "type": "uuid",
-          "primaryKey": true,
-          "notNull": true,
-          "default": "gen_random_uuid()"
-        },
-        "title": {
-          "name": "title",
-          "type": "varchar(255)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "chapter_type": {
-          "name": "chapter_type",
-          "type": "chapter_type",
-          "typeSchema": "public",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "'free'"
-        },
-        "price": {
-          "name": "price",
-          "type": "integer",
-          "primaryKey": false,
-          "notNull": true,
-          "default": 0
-        },
-        "summary": {
-          "name": "summary",
-          "type": "text",
-          "primaryKey": false,
-          "notNull": false
-        },
-        "pages": {
-          "name": "pages",
-          "type": "text[]",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "comic_id": {
-          "name": "comic_id",
-          "type": "uuid",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "unique_code": {
-          "name": "unique_code",
-          "type": "varchar(4)",
-          "primaryKey": false,
-          "notNull": true
-        },
-        "created_at": {
-          "name": "created_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        },
-        "updated_at": {
-          "name": "updated_at",
-          "type": "timestamp",
-          "primaryKey": false,
-          "notNull": true,
-          "default": "now()"
-        }
-      },
-      "indexes": {},
-      "foreignKeys": {
-        "draft_chapters_comic_id_comics_id_fk": {
-          "name": "draft_chapters_comic_id_comics_id_fk",
-          "tableFrom": "draft_chapters",
-          "tableTo": "comics",
-          "columnsFrom": [
-            "comic_id"
-          ],
-          "columnsTo": [
-            "id"
-          ],
-          "onDelete": "cascade",
-          "onUpdate": "no action"
-        }
-      },
-      "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "draft_chapters_unique_code_unique": {
-          "name": "draft_chapters_unique_code_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "unique_code"
-          ]
-        }
-      },
-      "policies": {},
-      "checkConstraints": {},
-      "isRLSEnabled": false
     }
   },
   "enums": {
@@ -1418,6 +1333,16 @@
       "values": [
         "solana",
         "phantom"
+      ]
+    },
+    "public.comic_status_enum": {
+      "name": "comic_status_enum",
+      "schema": "public",
+      "values": [
+        "published",
+        "pending",
+        "scheduled",
+        "draft"
       ]
     },
     "public.chapter_type": {
