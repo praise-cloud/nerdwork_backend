@@ -6,6 +6,3 @@ export * from "./wallet";
 export * from "./loyaltyPoints";
 export * from "./comic";
 export * from "./chapter";
-
-// console.log("🔎 Schema loaded with tables:", { authUsers });
-// process.exit(1);

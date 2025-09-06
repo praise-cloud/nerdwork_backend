@@ -99,7 +99,7 @@ export const fetchChaptersByComicSlug = async (req, res) => {
         .json({ success: false, message: "Comic not found" });
     }
 
-    const [allChapters] = await db
+    const allChapters = await db
       .select()
       .from(chapters)
       .where(eq(chapters.comicId, comic.id));
