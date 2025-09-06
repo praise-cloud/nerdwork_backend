@@ -109,11 +109,12 @@ export const uploadToS3 = async (req: any, res: any) => {
       Key: key,
       Body: file.buffer,
       ContentType: file.mimetype,
+      ACL: "public-read",
     });
 
     await s3.send(command);
 
-    const fileUrl = `https://${process.env.CLOUDFRONT_DOMAIN}/${key}`;
+    const fileUrl = `https://${process.env.S3_BUCKET_NAME}/${key}`;
 
     return res.status(200).json({
       success: true,
