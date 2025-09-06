@@ -55,7 +55,7 @@ router.put("/reader/pin", updateReaderProfilePin);
  * @access  Private (Jwt required)
  */
 
-router.get("/creator/pin", updateCreatorProfilePin);
+router.put("/creator/pin", updateCreatorProfilePin);
 
 /**
  * @swagger
