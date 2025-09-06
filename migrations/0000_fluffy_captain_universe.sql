@@ -182,6 +182,7 @@ CREATE TABLE "chapters" (
 	"chapter_type" "chapter_type" DEFAULT 'free' NOT NULL,
 	"price" integer DEFAULT 0 NOT NULL,
 	"summary" text,
+	"serial_no" integer DEFAULT 0 NOT NULL,
 	"pages" text[] NOT NULL,
 	"chapter_status" "comic_status_enum" DEFAULT 'draft',
 	"comic_id" uuid NOT NULL,

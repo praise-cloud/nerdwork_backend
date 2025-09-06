@@ -18,6 +18,7 @@ export const chapters = pgTable("chapters", {
   chapterType: chapterTypeEnum("chapter_type").default("free").notNull(),
   price: integer("price").default(0).notNull(),
   summary: text("summary"),
+  serialNo: integer("serial_no").notNull().default(0),
   pages: text("pages").array().notNull(),
   chapterStatus: comicStatusEnum("chapter_status").default("draft"),
   comicId: uuid("comic_id")

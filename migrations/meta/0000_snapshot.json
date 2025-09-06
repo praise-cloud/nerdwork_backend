@@ -1,5 +1,5 @@
 {
-  "id": "183e30ac-a3e3-4f0b-b26a-6791c654402f",
+  "id": "c125f7be-1bee-4c05-9d9d-afac614d5de7",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1253,6 +1253,13 @@
           "type": "text",
           "primaryKey": false,
           "notNull": false
+        },
+        "serial_no": {
+          "name": "serial_no",
+          "type": "integer",
+          "primaryKey": false,
+          "notNull": true,
+          "default": 0
         },
         "pages": {
           "name": "pages",

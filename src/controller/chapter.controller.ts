@@ -22,6 +22,7 @@ export const createChapter = async (req, res) => {
         summary,
         chapterStatus: "published",
         pages,
+        serialNo: sql`${chapters.serialNo} + 1`,
         comicId,
         uniqueCode,
       })
@@ -73,7 +74,7 @@ export const createDraft = async (req, res) => {
     // increment comic.noOfDrafts
     await db
       .update(comics)
-      .set({ noOfDrafts: sql`${comics.noOfDrafts} + 1` })
+      .set({ noOfChapters: sql`${comics.noOfChapters} + 1` })
       .where(eq(comics.id, comicId));
 
     return res.status(201).json({
@@ -99,7 +100,7 @@ export const fetchChaptersByComicSlug = async (req, res) => {
         .json({ success: false, message: "Comic not found" });
     }
 
-    const [allChapters] = await db
+    const allChapters = await db
       .select()
       .from(chapters)
       .where(eq(chapters.comicId, comic.id));
@@ -108,8 +109,7 @@ export const fetchChaptersByComicSlug = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      data: allChapters,
-      slug: comic.slug,
+      data: { allChapters, slug: comic.slug },
     });
   } catch (err: any) {
     console.error("Fetch Chapters Error:", err);
