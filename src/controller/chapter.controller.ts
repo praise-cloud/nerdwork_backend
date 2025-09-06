@@ -109,7 +109,7 @@ export const fetchChaptersByComicSlug = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      data: { allChapters, slug: comic.slug },
+      data: allChapters,
     });
   } catch (err: any) {
     console.error("Fetch Chapters Error:", err);
