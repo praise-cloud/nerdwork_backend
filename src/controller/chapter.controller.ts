@@ -97,7 +97,7 @@ export const fetchChaptersByComicSlug = async (req, res) => {
     const [allChapters] = await db
       .select()
       .from(chapters)
-      .where(eq(chapters.comicId, Number(comic.id)));
+      .where(eq(chapters.comicId, comic.id));
 
     return res.status(200).json({
       success: true,
