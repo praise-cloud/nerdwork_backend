@@ -143,7 +143,7 @@ export const fetchChapterPagesById = async (req, res) => {
     const [chapter] = await db
       .select()
       .from(chapters)
-      .where(eq(chapters.id, Number(chapterId)));
+      .where(eq(chapters.id, chapterId));
 
     if (!chapter) {
       return res
