@@ -8,16 +8,15 @@ import {
 
 const router = Router();
 
-router.post("/", addToLibrary);
-router.delete("/:comicId", removeFromLibrary);
-router.get("/", getLibrary);
-
 /**
  * @swagger
  * tags:
  *   name: Library
  *   description: Manage a user's comic library
- *
+ */
+
+/**
+ * @swagger
  * /library:
  *   get:
  *     summary: Get all comics in the user's library
@@ -58,7 +57,11 @@ router.get("/", getLibrary);
  *         description: Unauthorized
  *       500:
  *         description: Internal server error
- *
+ */
+router.get("/", getLibrary);
+
+/**
+ * @swagger
  * /library:
  *   post:
  *     summary: Add a comic to the user's library
@@ -88,7 +91,11 @@ router.get("/", getLibrary);
  *         description: Reader not found
  *       500:
  *         description: Internal server error
- *
+ */
+router.post("/", addToLibrary);
+
+/**
+ * @swagger
  * /library/{comicId}:
  *   delete:
  *     summary: Remove a comic from the user's library
@@ -112,5 +119,6 @@ router.get("/", getLibrary);
  *       500:
  *         description: Internal server error
  */
+router.delete("/:comicId", removeFromLibrary);
 
 export default router;
