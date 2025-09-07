@@ -178,7 +178,7 @@ router.post("/draft", createDraft);
  *       - in: path
  *         name: chapterId
  *         schema:
- *           type: uuid
+ *           type: string
  *           format: uuid
  *         required: true
  *         description: The ID of the chapter
