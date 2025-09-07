@@ -106,6 +106,11 @@ export const fetchChaptersByComicSlugForReaders = async (req, res) => {
         .json({ success: false, message: "Comic not found" });
     }
 
+    const [creator] = await db
+      .select()
+      .from(creatorProfile)
+      .where(eq(creatorProfile.id, comic.creatorId));
+
     const allChapters = await db
       .select()
       .from(chapters)
@@ -116,9 +121,26 @@ export const fetchChaptersByComicSlugForReaders = async (req, res) => {
         )
       );
 
+    const data = allChapters.map((chapter) => ({
+      id: chapter.id,
+      title: chapter.title,
+      chapterType: chapter.chapterType,
+      chapterStatus: chapter.chapterStatus,
+      price: chapter.price,
+      summary: chapter.summary,
+      pages: chapter.pages,
+      serialNo: chapter.serialNo,
+      uniqueCode: chapter.uniqueCode,
+      createdAt: chapter.createdAt,
+      updateAt: chapter.updatedAt,
+      creatorName: creator.creatorName,
+      comicSlug: comic.slug,
+      comicTitle: comic.title,
+    }));
+
     return res.status(200).json({
       success: true,
-      data: allChapters,
+      data,
     });
   } catch (err: any) {
     console.error("Fetch Chapters Error:", err);
@@ -138,34 +160,14 @@ export const fetchChaptersByComicSlugForCreators = async (req, res) => {
         .json({ success: false, message: "Comic not found" });
     }
 
-    const [creator] = await db
-      .select()
-      .from(creatorProfile)
-      .where(eq(creatorProfile.id, comic.creatorId));
-
     const allChapters = await db
       .select()
       .from(chapters)
       .where(eq(chapters.comicId, comic.id));
 
-    const data = allChapters.map((chapter) => ({
-      id: chapter.id,
-      title: chapter.title,
-      chapterType: chapter.chapterType,
-      chapterStatus: chapter.chapterStatus,
-      price: chapter.price,
-      summary: chapter.summary,
-      pages: chapter.pages,
-      serialNo: chapter.serialNo,
-      uniqueCode: chapter.uniqueCode,
-      createdAt: chapter.createdAt,
-      creatorName: creator.creatorName,
-      comicSlug: comic.slug,
-    }));
-
     return res.status(200).json({
       success: true,
-      data,
+      data: allChapters,
     });
   } catch (err: any) {
     console.error("Fetch Chapters Error:", err);
