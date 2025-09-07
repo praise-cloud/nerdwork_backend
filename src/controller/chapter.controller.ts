@@ -12,7 +12,13 @@ export const createChapter = async (req, res) => {
 
     const uniqueCode = Math.floor(1000 + Math.random() * 9000).toString();
 
-    // insert chapter
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(chapters)
+      .where(eq(chapters.comicId, comicId));
+
+    const serialNo = (count ?? 0) + 1;
+
     const [newChapter] = await db
       .insert(chapters)
       .values({
@@ -22,13 +28,12 @@ export const createChapter = async (req, res) => {
         summary,
         chapterStatus: "published",
         pages,
-        serialNo: sql`${chapters.serialNo} + 1`,
+        serialNo,
         comicId,
         uniqueCode,
       })
       .returning();
 
-    // increment comic.noOfChapters
     await db
       .update(comics)
       .set({
