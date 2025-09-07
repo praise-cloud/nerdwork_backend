@@ -2,6 +2,7 @@ import { and, eq, sql } from "drizzle-orm";
 import { db } from "../config/db";
 import { chapters } from "../model/chapter";
 import { comics } from "../model/comic";
+import { creatorProfile } from "../model/profile";
 
 // ✅ Create Chapter
 export const createChapter = async (req, res) => {
@@ -137,14 +138,33 @@ export const fetchChaptersByComicSlugForCreators = async (req, res) => {
         .json({ success: false, message: "Comic not found" });
     }
 
+    const [creator] = await db
+      .select()
+      .from(creatorProfile)
+      .where(eq(creatorProfile.id, comic.creatorId));
+
     const allChapters = await db
       .select()
       .from(chapters)
       .where(eq(chapters.comicId, comic.id));
 
+    const data = allChapters.map((chapter) => ({
+      id: chapter.id,
+      title: chapter.title,
+      chapterType: chapter.chapterType,
+      chapterStatus: chapter.chapterStatus,
+      price: chapter.price,
+      summary: chapter.summary,
+      serialNo: chapter.serialNo,
+      uniqueCode: chapter.uniqueCode,
+      createdAt: chapter.uniqueCode,
+      creatorName: creator.creatorName,
+      comicSlug: comic.slug,
+    }));
+
     return res.status(200).json({
       success: true,
-      data: allChapters,
+      data,
     });
   } catch (err: any) {
     console.error("Fetch Chapters Error:", err);

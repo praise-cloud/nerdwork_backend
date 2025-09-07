@@ -3,6 +3,7 @@ import { db } from "../config/db";
 import { comics } from "../model/comic";
 import jwt from "jsonwebtoken";
 import { creatorProfile } from "../model/profile";
+import { library } from "../model/library";
 
 export const createComic = async (req, res) => {
   try {
@@ -113,11 +114,18 @@ export const fetchComicBySlugForReaders = async (req, res) => {
       .from(creatorProfile)
       .where(eq(creatorProfile.id, comic.creatorId));
 
+    const [libraries] = await db
+      .select()
+      .from(library)
+      .where(eq(library.comicId, comic.id));
+
+    const inLibrary = !!libraries;
+
     return res.json({
       data: {
         comic,
         creatorName: creator.creatorName,
-        isInLibrary: false,
+        inLibrary,
       },
     });
   } catch (err) {

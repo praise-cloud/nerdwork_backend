@@ -10,6 +10,7 @@ import profileRoutes from "./routes/profile.routes";
 import comicRoutes from "./routes/comic.routes";
 import chapterRoutes from "./routes/chapter.routes";
 import fileRoutes from "./routes/files.routes";
+import libraryRoutes from "./routes/library.routes";
 
 app.use("/auth", authRoutes);
 app.use("/payment", authenticate, paymentRoutes);
@@ -19,6 +20,7 @@ app.use("/profile", profileRoutes);
 app.use("/comics", comicRoutes);
 app.use("/chapters", chapterRoutes);
 app.use("/file-upload", fileRoutes);
+app.use("/library", libraryRoutes);
 
 const PORT = 5000;
 /**

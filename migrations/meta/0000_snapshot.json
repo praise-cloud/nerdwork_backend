@@ -1,5 +1,5 @@
 {
-  "id": "ba43d696-8889-450a-a53a-a516ebc13feb",
+  "id": "6af70a0a-0f38-4f75-a9e5-c134e6a2a436",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1328,6 +1328,79 @@
           ]
         }
       },
+      "policies": {},
+      "checkConstraints": {},
+      "isRLSEnabled": false
+    },
+    "public.library": {
+      "name": "library",
+      "schema": "",
+      "columns": {
+        "id": {
+          "name": "id",
+          "type": "uuid",
+          "primaryKey": true,
+          "notNull": true,
+          "default": "gen_random_uuid()"
+        },
+        "reader_id": {
+          "name": "reader_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "comic_id": {
+          "name": "comic_id",
+          "type": "uuid",
+          "primaryKey": false,
+          "notNull": true
+        },
+        "created_at": {
+          "name": "created_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        },
+        "updated_at": {
+          "name": "updated_at",
+          "type": "timestamp",
+          "primaryKey": false,
+          "notNull": true,
+          "default": "now()"
+        }
+      },
+      "indexes": {},
+      "foreignKeys": {
+        "library_reader_id_reader_profile_id_fk": {
+          "name": "library_reader_id_reader_profile_id_fk",
+          "tableFrom": "library",
+          "tableTo": "reader_profile",
+          "columnsFrom": [
+            "reader_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        },
+        "library_comic_id_comics_id_fk": {
+          "name": "library_comic_id_comics_id_fk",
+          "tableFrom": "library",
+          "tableTo": "comics",
+          "columnsFrom": [
+            "comic_id"
+          ],
+          "columnsTo": [
+            "id"
+          ],
+          "onDelete": "cascade",
+          "onUpdate": "no action"
+        }
+      },
+      "compositePrimaryKeys": {},
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false

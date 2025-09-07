@@ -192,6 +192,14 @@ CREATE TABLE "chapters" (
 	CONSTRAINT "chapters_unique_code_unique" UNIQUE("unique_code")
 );
 --> statement-breakpoint
+CREATE TABLE "library" (
+	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+	"reader_id" uuid NOT NULL,
+	"comic_id" uuid NOT NULL,
+	"created_at" timestamp DEFAULT now() NOT NULL,
+	"updated_at" timestamp DEFAULT now() NOT NULL
+);
+--> statement-breakpoint
 ALTER TABLE "auth_sessions" ADD CONSTRAINT "auth_sessions_user_id_auth_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."auth_users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "password_resets" ADD CONSTRAINT "password_resets_user_id_auth_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."auth_users"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "nwt_transactions" ADD CONSTRAINT "nwt_transactions_user_wallet_id_user_wallets_id_fk" FOREIGN KEY ("user_wallet_id") REFERENCES "public"."user_wallets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
@@ -203,4 +211,6 @@ ALTER TABLE "user_wallets" ADD CONSTRAINT "user_wallets_user_profile_id_user_pro
 ALTER TABLE "wallet_addresses" ADD CONSTRAINT "wallet_addresses_user_wallet_id_user_wallets_id_fk" FOREIGN KEY ("user_wallet_id") REFERENCES "public"."user_wallets"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "loyalty_points" ADD CONSTRAINT "loyalty_points_user_id_auth_users_id_fk" FOREIGN KEY ("user_id") REFERENCES "public"."auth_users"("id") ON DELETE no action ON UPDATE no action;--> statement-breakpoint
 ALTER TABLE "comics" ADD CONSTRAINT "comics_creator_id_creator_profile_id_fk" FOREIGN KEY ("creator_id") REFERENCES "public"."creator_profile"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
-ALTER TABLE "chapters" ADD CONSTRAINT "chapters_comic_id_comics_id_fk" FOREIGN KEY ("comic_id") REFERENCES "public"."comics"("id") ON DELETE cascade ON UPDATE no action;
+ALTER TABLE "chapters" ADD CONSTRAINT "chapters_comic_id_comics_id_fk" FOREIGN KEY ("comic_id") REFERENCES "public"."comics"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "library" ADD CONSTRAINT "library_reader_id_reader_profile_id_fk" FOREIGN KEY ("reader_id") REFERENCES "public"."reader_profile"("id") ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE "library" ADD CONSTRAINT "library_comic_id_comics_id_fk" FOREIGN KEY ("comic_id") REFERENCES "public"."comics"("id") ON DELETE cascade ON UPDATE no action;
