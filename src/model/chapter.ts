@@ -6,6 +6,7 @@ import {
   varchar,
   pgEnum,
   uuid,
+  doublePrecision,
 } from "drizzle-orm/pg-core";
 import { comics, comicStatusEnum } from "./comic"; // assuming you already have comics entity
 
@@ -16,7 +17,7 @@ export const chapters = pgTable("chapters", {
   id: uuid("id").primaryKey().defaultRandom(),
   title: varchar("title", { length: 255 }).notNull(),
   chapterType: chapterTypeEnum("chapter_type").default("free").notNull(),
-  price: integer("price").default(0).notNull(),
+  price: doublePrecision("price").default(0).notNull(),
   summary: text("summary"),
   serialNo: integer("serial_no").notNull().default(0),
   pages: text("pages").array().notNull(),
