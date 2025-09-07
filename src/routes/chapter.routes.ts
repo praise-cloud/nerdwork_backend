@@ -127,7 +127,7 @@ router.post("/draft", createDraft);
  *       500:
  *         description: Internal server error
  *
- *  * /chapters/by-comic/reader/{slug}:
+ *   /chapters/by-comic/reader/{slug}:
  *   get:
  *     summary: Get all chapters by comic slug for readers
  *     description: Fetches all published chapters that belong to a given comic, identified by its slug.
