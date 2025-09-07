@@ -4,13 +4,15 @@ import {
   createDraft,
   fetchChapterByUniqueCode,
   fetchChapterPagesById,
-  fetchChaptersByComicSlug,
+  fetchChaptersByComicSlugForCreators,
+  fetchChaptersByComicSlugForReaders,
 } from "../controller/chapter.controller";
 
 const router = Router();
 
 router.post("/create", createChapter);
-router.get("/by-comic/:slug", fetchChaptersByComicSlug);
+router.get("/by-comic/creator/:slug", fetchChaptersByComicSlugForCreators);
+router.get("/by-comic/reader/:slug", fetchChaptersByComicSlugForReaders);
 router.get("/by-code/:code", fetchChapterByUniqueCode);
 router.get("/pages/:chapterId", fetchChapterPagesById);
 router.post("/draft", createDraft);
@@ -105,10 +107,30 @@ router.post("/draft", createDraft);
  *       500:
  *         description: Internal server error
  *
- * /chapters/by-comic/{slug}:
+ * /chapters/by-comic/creator/{slug}:
  *   get:
  *     summary: Get all chapters by comic slug
- *     description: Fetches all chapters that belong to a given comic, identified by its slug.
+ *     description: Fetches all chapters [both draft and published] that belong to a given comic, identified by its slug.
+ *     tags: [Chapters]
+ *     parameters:
+ *       - in: path
+ *         name: slug
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: The slug of the comic
+ *     responses:
+ *       200:
+ *         description: List of chapters
+ *       404:
+ *         description: Comic not found
+ *       500:
+ *         description: Internal server error
+ *
+ *  * /chapters/by-comic/reader/{slug}:
+ *   get:
+ *     summary: Get all chapters by comic slug for readers
+ *     description: Fetches all published chapters that belong to a given comic, identified by its slug.
  *     tags: [Chapters]
  *     parameters:
  *       - in: path

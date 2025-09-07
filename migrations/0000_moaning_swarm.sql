@@ -180,7 +180,7 @@ CREATE TABLE "chapters" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"title" varchar(255) NOT NULL,
 	"chapter_type" "chapter_type" DEFAULT 'free' NOT NULL,
-	"price" integer DEFAULT 0 NOT NULL,
+	"price" double precision DEFAULT 0 NOT NULL,
 	"summary" text,
 	"serial_no" integer DEFAULT 0 NOT NULL,
 	"pages" text[] NOT NULL,

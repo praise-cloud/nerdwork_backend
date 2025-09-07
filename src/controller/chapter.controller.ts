@@ -1,4 +1,4 @@
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "../config/db";
 import { chapters } from "../model/chapter";
 import { comics } from "../model/comic";
@@ -93,8 +93,40 @@ export const createDraft = async (req, res) => {
   }
 };
 
-// ✅ Fetch all chapters by Comic Slug
-export const fetchChaptersByComicSlug = async (req, res) => {
+// ✅ Fetch all chapters by Comic Slug for readers
+export const fetchChaptersByComicSlugForReaders = async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    const [comic] = await db.select().from(comics).where(eq(comics.slug, slug));
+    if (!comic) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Comic not found" });
+    }
+
+    const allChapters = await db
+      .select()
+      .from(chapters)
+      .where(
+        and(
+          eq(chapters.comicId, comic.id),
+          eq(chapters.chapterStatus, "published")
+        )
+      );
+
+    return res.status(200).json({
+      success: true,
+      data: allChapters,
+    });
+  } catch (err: any) {
+    console.error("Fetch Chapters Error:", err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+// ✅ Fetch all chapters by Comic Slug for creators
+export const fetchChaptersByComicSlugForCreators = async (req, res) => {
   try {
     const { slug } = req.params;
 
@@ -109,8 +141,6 @@ export const fetchChaptersByComicSlug = async (req, res) => {
       .select()
       .from(chapters)
       .where(eq(chapters.comicId, comic.id));
-
-    console.log("All chapter", allChapters);
 
     return res.status(200).json({
       success: true,
