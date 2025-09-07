@@ -59,7 +59,8 @@ router.post("/draft", createDraft);
  *                   type: string
  *                 example: ["page1.png", "page2.png"]
  *               comicId:
- *                 type: uuid
+ *                 type: string
+ *                 format: uuid
  *                 example: "4878476e-098d-4c87-b5ba-b2aedf13f43b"
  *     responses:
  *       201:
@@ -100,7 +101,8 @@ router.post("/draft", createDraft);
  *                 items:
  *                   type: string
  *               comicId:
- *                 type: uuid
+ *                 type: string
+ *                 format: uuid
  *     responses:
  *       201:
  *         description: Draft chapter created successfully
@@ -127,7 +129,7 @@ router.post("/draft", createDraft);
  *       500:
  *         description: Internal server error
  *
- *   /chapters/by-comic/reader/{slug}:
+ * /chapters/by-comic/reader/{slug}:
  *   get:
  *     summary: Get all chapters by comic slug for readers
  *     description: Fetches all published chapters that belong to a given comic, identified by its slug.
@@ -177,6 +179,7 @@ router.post("/draft", createDraft);
  *         name: chapterId
  *         schema:
  *           type: uuid
+ *           format: uuid
  *         required: true
  *         description: The ID of the chapter
  *     responses:
