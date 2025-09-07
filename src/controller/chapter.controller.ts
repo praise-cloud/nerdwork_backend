@@ -155,9 +155,10 @@ export const fetchChaptersByComicSlugForCreators = async (req, res) => {
       chapterStatus: chapter.chapterStatus,
       price: chapter.price,
       summary: chapter.summary,
+      pages: chapter.pages,
       serialNo: chapter.serialNo,
       uniqueCode: chapter.uniqueCode,
-      createdAt: chapter.uniqueCode,
+      createdAt: chapter.createdAt,
       creatorName: creator.creatorName,
       comicSlug: comic.slug,
     }));
