@@ -85,7 +85,9 @@
 //   }
 // };
 import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
+import { getSignedUrl } from "@aws-sdk/cloudfront-signer";
 import path from "path";
+import fs from "fs";
 
 // S3 client
 const s3Client = new S3Client({
@@ -111,7 +113,7 @@ export const uploadToS3 = async (req: any, res: any) => {
       .toString(36)
       .substring(7)}${fileExtension}`;
 
-    // Upload without ACL
+    // Upload to S3
     const command = new PutObjectCommand({
       Bucket: process.env.S3_BUCKET_NAME!,
       Key: key,
@@ -121,14 +123,33 @@ export const uploadToS3 = async (req: any, res: any) => {
 
     await s3Client.send(command);
 
-    // Build CloudFront or fallback S3 URL
-    const publicUrl = process.env.CLOUDFRONT_DOMAIN
-      ? `${process.env.CLOUDFRONT_DOMAIN}/${key}`
-      : `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+    // ===== Signed CloudFront URL Setup =====
+    const distributionDomain = process.env.CLOUDFRONT_DOMAIN; // e.g. "d3q14soxsgunx0.cloudfront.net"
+    const keyPairId = process.env.CLOUDFRONT_KEY_PAIR_ID;
+
+    // Try ENV var first, fallback to local .pem in dev
+    const privateKey =
+      process.env.CLOUDFRONT_PRIVATE_KEY ||
+      fs.readFileSync("../../private_key.pem", "utf8");
+
+    let fileUrl: string;
+
+    if (distributionDomain && keyPairId && privateKey) {
+      // Generate signed CloudFront URL (valid for 1 hour)
+      fileUrl = getSignedUrl({
+        url: `https://${distributionDomain}/${key}`,
+        keyPairId,
+        privateKey,
+        dateLessThan: new Date(Date.now() + 60 * 60 * 1000),
+      });
+    } else {
+      // Fallback to direct S3 public URL
+      fileUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+    }
 
     return res.status(200).json({
       success: true,
-      url: publicUrl,
+      url: fileUrl,
       message: "File uploaded successfully",
     });
   } catch (error) {

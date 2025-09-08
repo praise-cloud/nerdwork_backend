@@ -7,11 +7,6 @@ import {
   CreatePaylinkHookByApiKeyDto,
   CreatePaylinkWithApiDto,
 } from "@heliofi/common";
-import {
-  createUserPurchaseTransaction,
-  updateUserTransactionStatus,
-  updateUserWalletBalance,
-} from "./transaction.controller";
 
 const HELIO_API_BASE = "https://api.dev.hel.io/v1";
 // const HELIO_API_BASE = "https://api.hel.io/v1"; // For production
@@ -22,6 +17,11 @@ const HELIO_WALLET_ID = process.env.HELIO_WALLET_ID;
 const HELIO_PCURRENCY = process.env.HELIO_PCURRENCY;
 
 import jwt from "jsonwebtoken";
+import {
+  createUserPurchaseTransaction,
+  updateUserTransactionStatus,
+  updateUserWalletBalance,
+} from "./transaction.controller";
 
 export const createPaymentLink = async (req: any, res: any) => {
   const authHeader = req.headers.authorization;
