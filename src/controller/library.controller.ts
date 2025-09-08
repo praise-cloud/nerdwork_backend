@@ -5,7 +5,7 @@ import { library } from "../model/library";
 import { readerProfile } from "../model/profile";
 import { comics } from "../model/comic";
 
-const getUserIdFromToken = (req) => {
+export const getUserJwtFromToken = (req) => {
   const authHeader = req.headers.authorization;
   if (!authHeader || !authHeader.startsWith("Bearer ")) {
     throw new Error("Unauthorized");
@@ -18,7 +18,7 @@ const getUserIdFromToken = (req) => {
 // Add a comic to library
 export const addToLibrary = async (req, res) => {
   try {
-    const userId = getUserIdFromToken(req);
+    const userId = getUserJwtFromToken(req);
     const { comicId } = req.body;
 
     const [reader] = await db
@@ -46,7 +46,7 @@ export const addToLibrary = async (req, res) => {
 // Remove a comic from library
 export const removeFromLibrary = async (req, res) => {
   try {
-    const userId = getUserIdFromToken(req);
+    const userId = getUserJwtFromToken(req);
     const { comicId } = req.params;
 
     const [reader] = await db
@@ -70,7 +70,7 @@ export const removeFromLibrary = async (req, res) => {
 // Get all comics in user's library
 export const getLibrary = async (req, res) => {
   try {
-    const userId = getUserIdFromToken(req);
+    const userId = getUserJwtFromToken(req);
 
     const [reader] = await db
       .select()
@@ -85,6 +85,7 @@ export const getLibrary = async (req, res) => {
         title: comics.title,
         slug: comics.slug,
         coverImage: comics.image,
+        noOfChapters: comics.noOfChapters,
       })
       .from(library)
       .leftJoin(comics, eq(library.comicId, comics.id))

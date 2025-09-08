@@ -6,6 +6,7 @@ import {
   fetchChapterPagesById,
   fetchChaptersByComicSlugForCreators,
   fetchChaptersByComicSlugForReaders,
+  publishDraft,
 } from "../controller/chapter.controller";
 
 const router = Router();
@@ -16,6 +17,7 @@ router.get("/by-comic/reader/:slug", fetchChaptersByComicSlugForReaders);
 router.get("/by-code/:code", fetchChapterByUniqueCode);
 router.get("/pages/:chapterId", fetchChapterPagesById);
 router.post("/draft", createDraft);
+router.post("/draft/publish", publishDraft);
 
 /**
  * @swagger
@@ -187,6 +189,32 @@ router.post("/draft", createDraft);
  *         description: List of chapter pages
  *       404:
  *         description: Chapter not found
+ *       500:
+ *         description: Internal server error
+ *
+ *   /chapters/publish/draft:
+ *   post:
+ *     summary: Publish a draft chapter
+ *     description: Publishes a chapter that was in the draft increments the chapter serial number and comics chapter numbers and also deducts one from comics no of drafts.
+ *     tags: [Chapters]
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - comicId
+ *               - chapterUniqueCode
+ *             properties:
+ *               draftUniqCode:
+ *                 type: string
+ *               comicId:
+ *                 type: string
+ *                 format: uuid
+ *     responses:
+ *       201:
+ *         description: Draft Published successfully
  *       500:
  *         description: Internal server error
  */

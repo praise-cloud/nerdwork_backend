@@ -1,10 +1,9 @@
-import { and, eq, sql } from "drizzle-orm";
+import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "../config/db";
-import { chapters } from "../model/chapter";
+import { chapters, chapterTypeEnum } from "../model/chapter";
 import { comics } from "../model/comic";
 import { creatorProfile } from "../model/profile";
 
-// ✅ Create Chapter
 export const createChapter = async (req, res) => {
   try {
     const { title, chapterType, price, summary, pages, comicId } = req.body;
@@ -13,12 +12,14 @@ export const createChapter = async (req, res) => {
 
     const uniqueCode = Math.floor(1000 + Math.random() * 9000).toString();
 
-    const [{ count }] = await db
-      .select({ count: sql<number>`count(*)` })
+    const [lastChapter] = await db
+      .select({ serialNo: chapters.serialNo })
       .from(chapters)
-      .where(eq(chapters.comicId, comicId));
+      .where(eq(chapters.comicId, comicId))
+      .orderBy(desc(chapters.serialNo)) // get the highest serialNo
+      .limit(1);
 
-    const serialNo = (count ?? 0) + 1;
+    const serialNo = lastChapter ? lastChapter.serialNo + 1 : 1;
 
     const [newChapter] = await db
       .insert(chapters)
@@ -80,16 +81,16 @@ export const createDraft = async (req, res) => {
     // increment comic.noOfDrafts
     await db
       .update(comics)
-      .set({ noOfChapters: sql`${comics.noOfChapters} + 1` })
+      .set({ noOfDrafts: sql`${comics.noOfDrafts} + 1` })
       .where(eq(comics.id, comicId));
 
     return res.status(201).json({
       success: true,
-      message: "Chapter created successfully",
+      message: "Draft created successfully",
       data: newChapter,
     });
   } catch (err: any) {
-    console.error("Create Chapter Error:", err);
+    console.error("Create Draft Error:", err);
     return res.status(500).json({ success: false, message: err.message });
   }
 };
@@ -197,6 +198,54 @@ export const fetchChapterByUniqueCode = async (req, res) => {
     });
   } catch (err: any) {
     console.error("Fetch Chapter by Code Error:", err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const publishDraft = async (req, res) => {
+  try {
+    const { draftUniqCode, comicId } = req.params;
+
+    const [{ count }] = await db
+      .select({ count: sql<number>`count(*)` })
+      .from(chapters)
+      .where(eq(chapters.comicId, comicId));
+
+    const serialNo = (count ?? 0) + 1;
+
+    const [chapter] = await db
+      .select()
+      .from(chapters)
+      .where(eq(chapters.uniqueCode, draftUniqCode));
+
+    if (!chapter) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Chapter not found" });
+    }
+    await db
+      .update(chapters)
+      .set({
+        chapterStatus: "published",
+        serialNo,
+      })
+      .where(eq(chapters.id, chapter.id));
+
+    await db
+      .update(comics)
+      .set({
+        noOfChapters: sql`${comics.noOfChapters} + 1`,
+        noOfDrafts: sql`${comics.noOfDrafts} - 1`,
+        comicStatus: "published",
+      })
+      .where(eq(comics.id, comicId));
+
+    return res.status(200).json({
+      success: true,
+      data: chapter,
+    });
+  } catch (err: any) {
+    console.error("publish draft error Error:", err);
     return res.status(500).json({ success: false, message: err.message });
   }
 };
