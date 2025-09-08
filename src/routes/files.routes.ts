@@ -40,7 +40,7 @@ const router = Router();
  *                   example: true
  *                 url:
  *                   type: string
- *                   example: "https://cdn.interspace.africa/media/1234abcd-image.png"
+ *                   example: "https://cdn.nerdwork/media/1234abcd-image.png"
  *                 message:
  *                   type: string
  *                   example: File uploaded successfully

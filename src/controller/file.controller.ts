@@ -130,7 +130,7 @@ export const uploadToS3 = async (req: any, res: any) => {
     // Try ENV var first, fallback to local .pem in dev
     const privateKey =
       process.env.CLOUDFRONT_PRIVATE_KEY ||
-      fs.readFileSync("../../private_key.pem", "utf8");
+      fs.readFileSync("./private_key.pem", "utf8");
 
     let fileUrl: string;
 
