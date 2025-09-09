@@ -88,6 +88,10 @@ import { S3Client, PutObjectCommand } from "@aws-sdk/client-s3";
 import { getSignedUrl } from "@aws-sdk/cloudfront-signer";
 import path from "path";
 import fs from "fs";
+import jwt from "jsonwebtoken";
+import { db } from "../config/db";
+import { creatorProfile } from "../model/profile";
+import { eq } from "drizzle-orm";
 
 // S3 client
 const s3Client = new S3Client({
@@ -100,6 +104,30 @@ const s3Client = new S3Client({
 
 export const uploadToS3 = async (req: any, res: any) => {
   try {
+    const token = req.headers.authorization?.split(" ")[1];
+    if (!token) {
+      return res
+        .status(401)
+        .json({ success: false, error: "No token provided" });
+    }
+
+    let decoded: any;
+    try {
+      decoded = jwt.verify(token, process.env.JWT_SECRET!);
+    } catch (err) {
+      return res.status(403).json({ success: false, error: "Invalid token" });
+    }
+
+    const userId = decoded.userId;
+
+    const [creator] = await db
+      .select()
+      .from(creatorProfile)
+      .where(eq(creatorProfile.userId, userId));
+
+    const creatorName = creator.creatorName;
+
+    // 2️⃣ Check file
     if (!req.file) {
       return res.status(400).json({
         success: false,
@@ -109,11 +137,14 @@ export const uploadToS3 = async (req: any, res: any) => {
 
     const file = req.file;
     const fileExtension = path.extname(file.originalname);
-    const key = `media/${Date.now()}-${Math.random()
+    const uniqueName = `${Date.now()}-${Math.random()
       .toString(36)
       .substring(7)}${fileExtension}`;
 
-    // Upload to S3
+    // 👇 Organize by creator
+    const key = `creators/${creatorName}/${uniqueName}`;
+
+    // 3️⃣ Upload to S3
     const command = new PutObjectCommand({
       Bucket: process.env.S3_BUCKET_NAME!,
       Key: key,
@@ -123,19 +154,16 @@ export const uploadToS3 = async (req: any, res: any) => {
 
     await s3Client.send(command);
 
-    // ===== Signed CloudFront URL Setup =====
-    const distributionDomain = process.env.CLOUDFRONT_DOMAIN; // e.g. "d3q14soxsgunx0.cloudfront.net"
+    // 4️⃣ Signed CloudFront URL
+    const distributionDomain = process.env.CLOUDFRONT_DOMAIN;
     const keyPairId = process.env.CLOUDFRONT_KEY_PAIR_ID;
 
-    // Try ENV var first, fallback to local .pem in dev
     const privateKey =
       process.env.CLOUDFRONT_PRIVATE_KEY ||
       fs.readFileSync("./private_key.pem", "utf8");
 
     let fileUrl: string;
-
     if (distributionDomain && keyPairId && privateKey) {
-      // Generate signed CloudFront URL (valid for 1 hour)
       fileUrl = getSignedUrl({
         url: `https://${distributionDomain}/${key}`,
         keyPairId,
@@ -143,7 +171,6 @@ export const uploadToS3 = async (req: any, res: any) => {
         dateLessThan: new Date(Date.now() + 60 * 60 * 1000),
       });
     } else {
-      // Fallback to direct S3 public URL
       fileUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
     }
 
@@ -160,3 +187,66 @@ export const uploadToS3 = async (req: any, res: any) => {
     });
   }
 };
+
+// export const uploadToS3 = async (req: any, res: any) => {
+//   try {
+//     if (!req.file) {
+//       return res.status(400).json({
+//         success: false,
+//         error: "No file uploaded",
+//       });
+//     }
+
+//     const file = req.file;
+//     const fileExtension = path.extname(file.originalname);
+//     const key = `media/${Date.now()}-${Math.random()
+//       .toString(36)
+//       .substring(7)}${fileExtension}`;
+
+//     // Upload to S3
+//     const command = new PutObjectCommand({
+//       Bucket: process.env.S3_BUCKET_NAME!,
+//       Key: key,
+//       Body: file.buffer,
+//       ContentType: file.mimetype,
+//     });
+
+//     await s3Client.send(command);
+
+//     // ===== Signed CloudFront URL Setup =====
+//     const distributionDomain = process.env.CLOUDFRONT_DOMAIN; // e.g. "d3q14soxsgunx0.cloudfront.net"
+//     const keyPairId = process.env.CLOUDFRONT_KEY_PAIR_ID;
+
+//     // Try ENV var first, fallback to local .pem in dev
+//     const privateKey =
+//       process.env.CLOUDFRONT_PRIVATE_KEY ||
+//       fs.readFileSync("./private_key.pem", "utf8");
+
+//     let fileUrl: string;
+
+//     if (distributionDomain && keyPairId && privateKey) {
+//       // Generate signed CloudFront URL (valid for 1 hour)
+//       fileUrl = getSignedUrl({
+//         url: `https://${distributionDomain}/${key}`,
+//         keyPairId,
+//         privateKey,
+//         dateLessThan: new Date(Date.now() + 60 * 60 * 1000),
+//       });
+//     } else {
+//       // Fallback to direct S3 public URL
+//       fileUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+//     }
+
+//     return res.status(200).json({
+//       success: true,
+//       url: fileUrl,
+//       message: "File uploaded successfully",
+//     });
+//   } catch (error) {
+//     console.error("Upload error:", error);
+//     return res.status(500).json({
+//       success: false,
+//       error: "Internal server error",
+//     });
+//   }
+// };
