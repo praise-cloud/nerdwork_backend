@@ -194,7 +194,7 @@ router.post("/purchase", buyChapter);
  *       500:
  *         description: Internal server error
  *
- *   /chapters/publish/draft:
+ * /chapters/publish/draft:
  *   post:
  *     summary: Publish a draft chapter
  *     description: Publishes a chapter that was in the draft increments the chapter serial number and comics chapter numbers and also deducts one from comics no of drafts.
@@ -220,7 +220,7 @@ router.post("/purchase", buyChapter);
  *       500:
  *         description: Internal server error
  *
- *  /chapters/purchase:
+ * /chapters/purchase:
  *   post:
  *     summary: Purchase a comic chapter
  *     description: Allows a reader to purchase a comic chapter using NWT after verifying their PIN.
