@@ -13,7 +13,7 @@ import fileRoutes from "./routes/files.routes";
 import libraryRoutes from "./routes/library.routes";
 
 app.use("/auth", authRoutes);
-app.use("/payment", authenticate, paymentRoutes);
+app.use("/payment", paymentRoutes);
 app.use("/nft", authenticate, nftRoutes);
 app.use("/wallet", authenticate, walletRoutes);
 app.use("/profile", profileRoutes);

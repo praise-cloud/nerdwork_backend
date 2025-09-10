@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  buyChapter,
   createChapter,
   createDraft,
   fetchChapterByUniqueCode,
@@ -18,6 +19,7 @@ router.get("/by-code/:code", fetchChapterByUniqueCode);
 router.get("/pages/:chapterId", fetchChapterPagesById);
 router.post("/draft", createDraft);
 router.post("/draft/publish", publishDraft);
+router.post("/purchase", buyChapter);
 
 /**
  * @swagger
@@ -215,6 +217,106 @@ router.post("/draft/publish", publishDraft);
  *     responses:
  *       201:
  *         description: Draft Published successfully
+ *       500:
+ *         description: Internal server error
+ *
+ *  /chapters/purchase:
+ *   post:
+ *     summary: Purchase a comic chapter
+ *     description: Allows a reader to purchase a comic chapter using NWT after verifying their PIN.
+ *     tags: [Chapters]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - nwtAmount
+ *               - pin
+ *               - chapterId
+ *             properties:
+ *               nwtAmount:
+ *                 type: number
+ *                 example: 50
+ *                 description: Amount of NWT to spend
+ *               pin:
+ *                 type: string
+ *                 example: "1234"
+ *                 description: Reader's transaction PIN
+ *               chapterId:
+ *                 type: string
+ *                 example: "chap_abc123"
+ *                 description: ID of the chapter being purchased
+ *     responses:
+ *       200:
+ *         description: Chapter purchased successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Chapter purchased successfully!
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     chapter:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                           example: "chap_abc123"
+ *                         title:
+ *                           type: string
+ *                           example: "Chapter 1: The Awakening"
+ *                         chapterNumber:
+ *                           type: integer
+ *                           example: 1
+ *                     comic:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                           example: "comic_123"
+ *                         title:
+ *                           type: string
+ *                           example: "My Awesome Comic"
+ *                         slug:
+ *                           type: string
+ *                           example: "my-awesome-comic"
+ *                     creator:
+ *                       type: object
+ *                       properties:
+ *                         id:
+ *                           type: string
+ *                           example: "creator_456"
+ *                         name:
+ *                           type: string
+ *                           example: "John Doe"
+ *       400:
+ *         description: Invalid request (e.g. incorrect PIN, insufficient balance, or invalid chapter)
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                   example: false
+ *                 message:
+ *                   type: string
+ *                   example: Incorrect PIN
+ *       401:
+ *         description: Unauthorized (missing or invalid token)
+ *       404:
+ *         description: Chapter, Comic, Creator, or Reader not found
  *       500:
  *         description: Internal server error
  */

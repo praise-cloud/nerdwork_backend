@@ -2,7 +2,10 @@ import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "../config/db";
 import { chapters, chapterTypeEnum } from "../model/chapter";
 import { comics } from "../model/comic";
-import { creatorProfile } from "../model/profile";
+import { creatorProfile, readerProfile } from "../model/profile";
+import { processContentPurchase } from "./transaction.controller";
+import jwt from "jsonwebtoken";
+import bcrypt from "bcrypt";
 
 export const createChapter = async (req, res) => {
   try {
@@ -273,5 +276,153 @@ export const fetchChapterPagesById = async (req, res) => {
   } catch (err: any) {
     console.error("Fetch Pages Error:", err);
     return res.status(500).json({ success: false, message: err.message });
+  }
+};
+
+export const buyChapter = async (req: any, res: any) => {
+  try {
+    const { nwtAmount, pin, chapterId } = req.body;
+
+    // Authenticate user
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const token = authHeader.split(" ")[1];
+    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
+    const user = decoded.userId;
+
+    const [reader] = await db
+      .select()
+      .from(readerProfile)
+      .where(eq(readerProfile.userId, user));
+
+    if (!reader) {
+      return res.status(404).json({
+        success: false,
+        message: "Reader profile not found",
+      });
+    }
+
+    // ✅ Verify PIN before proceeding
+    const isPinValid = await bcrypt.compare(pin, reader.pinHash);
+    if (!isPinValid) {
+      return res.status(400).json({
+        success: false,
+        message: "Incorrect PIN",
+      });
+    }
+
+    // Validate required fields
+    if (!nwtAmount || nwtAmount <= 0) {
+      return res.status(400).json({
+        success: false,
+        message: "Valid NWT amount is required",
+      });
+    }
+
+    // Get chapter details with comic information
+    const [chapter] = await db
+      .select()
+      .from(chapters)
+      .where(eq(chapters.id, chapterId));
+
+    if (!chapter) {
+      return res.status(404).json({
+        success: false,
+        message: "Chapter not found",
+      });
+    }
+
+    // Get comic details
+    const [comic] = await db
+      .select()
+      .from(comics)
+      .where(eq(comics.id, chapter.comicId));
+
+    if (!comic) {
+      return res.status(404).json({
+        success: false,
+        message: "Comic not found",
+      });
+    }
+
+    // Get creator information
+    const [creator] = await db
+      .select()
+      .from(creatorProfile)
+      .where(eq(creatorProfile.id, comic.creatorId));
+
+    if (!creator) {
+      return res.status(404).json({
+        success: false,
+        message: "Creator not found",
+      });
+    }
+
+    // Process the purchase using transaction system
+    const purchaseResult = await processContentPurchase(
+      reader.fullName, // User making the purchase
+      comic.creatorId, // Creator receiving payment
+      chapterId, // Content being purchased (chapter ID)
+      nwtAmount, // Amount in NWT
+      "chapter_unlock", // Content type
+      0.3 // Platform fee (30%)
+    );
+
+    if (!purchaseResult.success) {
+      return res.status(400).json({
+        success: false,
+        message: purchaseResult || "Failed to process purchase",
+        error: purchaseResult,
+      });
+    }
+
+    // Return success response with transaction details
+    return res.status(200).json({
+      success: true,
+      message: "Chapter purchased successfully!",
+      data: {
+        chapter: {
+          id: chapter.id,
+          title: chapter.title,
+          chapterNumber: chapter.serialNo,
+        },
+        comic: {
+          id: comic.id,
+          title: comic.title,
+          slug: comic.slug,
+        },
+        creator: {
+          id: creator.id,
+          name: creator.creatorName,
+        },
+        // transaction: {
+        //   userTransactionId: purchaseResult.userTransaction?.id,
+        //   creatorTransactionId: purchaseResult.creatorTransaction?.id,
+        //   nwtAmount,
+        //   userNewBalance: purchaseResult.userNewBalance,
+        //   creatorNewBalance: purchaseResult.creatorNewBalance,
+        // },
+      },
+    });
+  } catch (error: any) {
+    console.error("Error buying chapter:", error);
+
+    // Handle specific error types
+    if (error.message === "Insufficient balance") {
+      return res.status(400).json({
+        success: false,
+        message: "Insufficient NWT balance. Please purchase more tokens.",
+        errorCode: "INSUFFICIENT_BALANCE",
+      });
+    }
+
+    return res.status(500).json({
+      success: false,
+      message: "Failed to purchase chapter",
+      error: error.message,
+    });
   }
 };
