@@ -151,7 +151,7 @@ export const updateUserWalletBalance = async (
         walletBalance: newBalance,
         updatedAt: new Date(),
       })
-      .where(eq(readerProfile.userId, userId));
+      .where(eq(readerProfile.id, userId));
 
     return { success: true, newBalance };
   } catch (error) {

@@ -145,6 +145,11 @@ export const fetchChaptersByComicSlugForReaders = async (req, res) => {
       .from(creatorProfile)
       .where(eq(creatorProfile.id, comic.creatorId));
 
+    const [reader] = await db
+      .select()
+      .from(readerProfile)
+      .where(eq(readerProfile.userId, userId));
+
     const allChapters = await db
       .select()
       .from(chapters)
@@ -158,10 +163,9 @@ export const fetchChaptersByComicSlugForReaders = async (req, res) => {
     const paid = await db
       .select({ chapterId: paidChapters.chapterId })
       .from(paidChapters)
-      .where(eq(paidChapters.readerId, userId));
+      .where(eq(paidChapters.readerId, reader.id));
 
     const paidChapterIds = new Set(paid.map((p) => p.chapterId));
-
     console.log("Paid Chapters", paidChapterIds);
 
     const data = allChapters.map((chapter) => ({
