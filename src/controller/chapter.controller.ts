@@ -8,12 +8,30 @@ import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
 import { mapFilesToUrls } from "./file.controller";
 
+// helper function to strip URL
+function extractFilePath(url: string): string {
+  try {
+    const urlObj = new URL(url);
+    return urlObj.pathname.startsWith("/")
+      ? urlObj.pathname.slice(1)
+      : urlObj.pathname;
+  } catch (err) {
+    // fallback in case url is not a valid URL
+    return url;
+  }
+}
+
 export const createChapter = async (req, res) => {
   try {
     const { title, chapterType, price, summary, pages, comicId } = req.body;
 
     const finalPrice = chapterType === "free" ? 0 : price;
     const uniqueCode = Math.floor(1000 + Math.random() * 9000).toString();
+
+    // clean up the pages array
+    const cleanedPages = Array.isArray(pages)
+      ? pages.map((p) => extractFilePath(p))
+      : [];
 
     const [lastChapter] = await db
       .select({ maxSerial: sql<number>`MAX(${chapters.serialNo})` })
@@ -35,7 +53,7 @@ export const createChapter = async (req, res) => {
         price: finalPrice,
         summary,
         chapterStatus: "published",
-        pages,
+        pages: cleanedPages,
         serialNo: nextSerial,
         comicId,
         uniqueCode,
@@ -66,10 +84,13 @@ export const createDraft = async (req, res) => {
     const { title, chapterType, price, summary, pages, comicId } = req.body;
 
     const finalPrice = chapterType === "free" ? 0 : price;
-
     const uniqueCode = Math.floor(1000 + Math.random() * 9000).toString();
 
-    // insert chapter
+    // clean up the pages array
+    const cleanedPages = Array.isArray(pages)
+      ? pages.map((p) => extractFilePath(p))
+      : [];
+
     const [newChapter] = await db
       .insert(chapters)
       .values({
@@ -77,14 +98,13 @@ export const createDraft = async (req, res) => {
         chapterType,
         price: finalPrice,
         summary,
-        pages,
+        pages: cleanedPages,
         comicId,
         chapterStatus: "draft",
         uniqueCode,
       })
       .returning();
 
-    // increment comic.noOfDrafts
     await db
       .update(comics)
       .set({ noOfDrafts: sql`${comics.noOfDrafts} + 1` })
