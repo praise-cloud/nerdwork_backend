@@ -270,7 +270,7 @@ export const processContentPurchase = async (
     return await db.transaction(async (tx) => {
       // 1. Check user balance
       const balanceCheck = await updateUserWalletBalance(
-        userId,
+        readerId,
         nwtAmount,
         "subtract"
       );
@@ -280,7 +280,7 @@ export const processContentPurchase = async (
 
       // 2. Create user spend transaction
       const userTransaction = await createUserSpendTransaction(
-        userId,
+        readerId,
         nwtAmount,
         contentType,
         contentId,
