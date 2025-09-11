@@ -4,6 +4,7 @@ import { db } from "../config/db";
 import { library } from "../model/library";
 import { readerProfile } from "../model/profile";
 import { comics } from "../model/comic";
+import { generateFileUrl } from "./file.controller";
 
 export const getUserJwtFromToken = (req) => {
   const authHeader = req.headers.authorization;
@@ -91,7 +92,15 @@ export const getLibrary = async (req, res) => {
       .leftJoin(comics, eq(library.comicId, comics.id))
       .where(eq(library.readerId, readerId));
 
-    return res.json({ success: true, comics: results });
+    const data = results.map((chapter) => ({
+      id: chapter.comicId,
+      title: chapter.title,
+      noOfChapters: chapter.noOfChapters,
+      image: generateFileUrl(chapter.coverImage),
+      slug: chapter.slug,
+    }));
+
+    return res.json({ success: true, comics: data });
   } catch (err: any) {
     console.error("GetLibrary Error:", err);
     return res.status(500).json({ success: false, message: err.message });

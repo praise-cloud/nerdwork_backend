@@ -4,6 +4,7 @@ import { comics } from "../model/comic";
 import jwt from "jsonwebtoken";
 import { creatorProfile } from "../model/profile";
 import { library } from "../model/library";
+import { generateFileUrl } from "./file.controller";
 
 export const createComic = async (req, res) => {
   try {
@@ -80,7 +81,25 @@ export const fetchAllComicByJwt = async (req, res) => {
       .from(comics)
       .where(eq(comics.creatorId, creator.id));
 
-    return res.json({ comics: userComics });
+    const data = userComics.map((chapter) => ({
+      id: chapter.id,
+      title: chapter.title,
+      language: chapter.language,
+      ageRating: chapter.ageRating,
+      noOfChapters: chapter.noOfChapters,
+      noOfDrafts: chapter.noOfDrafts,
+      description: chapter.description,
+      image: generateFileUrl(chapter.image),
+      comicStatus: chapter.comicStatus,
+      genre: chapter.genre,
+      tags: chapter.tags,
+      slug: chapter.slug,
+      creatorName: creator.creatorName,
+      createdAt: chapter.createdAt,
+      updatedAt: chapter.updatedAt,
+    }));
+
+    return res.json({ comics: data });
   } catch (err) {
     console.error(err);
     return res.status(400).json({ message: "Failed to fetch comics" });
@@ -95,7 +114,24 @@ export const fetchComicBySlug = async (req, res) => {
 
     if (!comic) return res.status(404).json({ message: "Comic not found" });
 
-    return res.json({ comic });
+    const data = {
+      id: comic.id,
+      title: comic.title,
+      language: comic.language,
+      ageRating: comic.ageRating,
+      noOfChapters: comic.noOfChapters,
+      noOfDrafts: comic.noOfDrafts,
+      description: comic.description,
+      image: generateFileUrl(comic.image),
+      comicStatus: comic.comicStatus,
+      genre: comic.genre,
+      tags: comic.tags,
+      slug: comic.slug,
+      createdAt: comic.createdAt,
+      updatedAt: comic.updatedAt,
+    };
+
+    return res.json({ data });
   } catch (err) {
     console.error(err);
     return res.status(400).json({ message: "Failed to fetch comic" });
@@ -121,12 +157,27 @@ export const fetchComicBySlugForReaders = async (req, res) => {
 
     const inLibrary = !!libraries;
 
+    const data = {
+      id: comic.id,
+      title: comic.title,
+      language: comic.language,
+      ageRating: comic.ageRating,
+      noOfChapters: comic.noOfChapters,
+      noOfDrafts: comic.noOfDrafts,
+      description: comic.description,
+      image: generateFileUrl(comic.image),
+      comicStatus: comic.comicStatus,
+      genre: comic.genre,
+      tags: comic.tags,
+      slug: comic.slug,
+      createdAt: comic.createdAt,
+      updatedAt: comic.updatedAt,
+      creatorName: creator.creatorName,
+      inLibrary,
+    };
+
     return res.json({
-      data: {
-        comic,
-        creatorName: creator.creatorName,
-        inLibrary,
-      },
+      data,
     });
   } catch (err) {
     console.error(err);
@@ -134,7 +185,6 @@ export const fetchComicBySlugForReaders = async (req, res) => {
   }
 };
 
-// ✅ Fetch all comics (reader endpoint)
 export const fetchAllComics = async (req, res) => {
   try {
     const publishedComics = await db
@@ -142,10 +192,50 @@ export const fetchAllComics = async (req, res) => {
       .from(comics)
       .where(eq(comics.comicStatus, "published"));
 
-    return res.json({ comics: publishedComics });
+    const [creator] = await db
+      .select()
+      .from(creatorProfile)
+      .where(eq(creatorProfile.id, comics.creatorId));
+
+    const data = publishedComics.map((chapter) => ({
+      id: chapter.id,
+      title: chapter.title,
+      language: chapter.language,
+      ageRating: chapter.ageRating,
+      noOfChapters: chapter.noOfChapters,
+      noOfDrafts: chapter.noOfDrafts,
+      description: chapter.description,
+      image: generateFileUrl(chapter.image),
+      comicStatus: chapter.comicStatus,
+      genre: chapter.genre,
+      tags: chapter.tags,
+      slug: chapter.slug,
+      creatorName: creator.creatorName,
+      createdAt: chapter.createdAt,
+      updatedAt: chapter.updatedAt,
+    }));
+
+    return res.json({ comics: data });
   } catch (err) {
     console.error(err);
     return res.status(400).json({ message: "Failed to fetch comics" });
+  }
+};
+
+export const deleteComicBySlug = async (req, res) => {
+  try {
+    const { slug } = req.params;
+
+    const [comic] = await db.select().from(comics).where(eq(comics.slug, slug));
+
+    if (!comic) return res.status(404).json({ message: "Comic not found" });
+
+    await db.delete(comics).where(eq(comics.slug, slug));
+
+    return res.json({ message: "Comic deleted Successfully" });
+  } catch (err) {
+    console.error(err);
+    return res.status(400).json({ message: "Failed to fetch comic" });
   }
 };
 

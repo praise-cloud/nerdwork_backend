@@ -188,65 +188,40 @@ export const uploadToS3 = async (req: any, res: any) => {
   }
 };
 
-// export const uploadToS3 = async (req: any, res: any) => {
-//   try {
-//     if (!req.file) {
-//       return res.status(400).json({
-//         success: false,
-//         error: "No file uploaded",
-//       });
-//     }
+const distributionDomain = process.env.CLOUDFRONT_DOMAIN;
+const keyPairId = process.env.CLOUDFRONT_KEY_PAIR_ID;
+const privateKey =
+  process.env.CLOUDFRONT_PRIVATE_KEY ||
+  fs.readFileSync("./private_key.pem", "utf8");
 
-//     const file = req.file;
-//     const fileExtension = path.extname(file.originalname);
-//     const key = `media/${Date.now()}-${Math.random()
-//       .toString(36)
-//       .substring(7)}${fileExtension}`;
+/**
+ * Generate a CloudFront signed URL (or fallback S3 public URL)
+ * @param key S3 object key (e.g. creators/john/123.jpg)
+ * @param expiresIn Expiry time in ms (default 1 hour)
+ * @returns string - signed URL or direct S3 URL
+ */
+export const generateFileUrl = (
+  key: string,
+  expiresIn = 60 * 60 * 1000
+): string => {
+  if (!key) return "";
 
-//     // Upload to S3
-//     const command = new PutObjectCommand({
-//       Bucket: process.env.S3_BUCKET_NAME!,
-//       Key: key,
-//       Body: file.buffer,
-//       ContentType: file.mimetype,
-//     });
+  if (distributionDomain && keyPairId && privateKey) {
+    return getSignedUrl({
+      url: `https://${distributionDomain}/${key}`,
+      keyPairId,
+      privateKey,
+      dateLessThan: new Date(Date.now() + expiresIn),
+    });
+  }
 
-//     await s3Client.send(command);
+  // fallback
+  return `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
+};
 
-//     // ===== Signed CloudFront URL Setup =====
-//     const distributionDomain = process.env.CLOUDFRONT_DOMAIN; // e.g. "d3q14soxsgunx0.cloudfront.net"
-//     const keyPairId = process.env.CLOUDFRONT_KEY_PAIR_ID;
-
-//     // Try ENV var first, fallback to local .pem in dev
-//     const privateKey =
-//       process.env.CLOUDFRONT_PRIVATE_KEY ||
-//       fs.readFileSync("./private_key.pem", "utf8");
-
-//     let fileUrl: string;
-
-//     if (distributionDomain && keyPairId && privateKey) {
-//       // Generate signed CloudFront URL (valid for 1 hour)
-//       fileUrl = getSignedUrl({
-//         url: `https://${distributionDomain}/${key}`,
-//         keyPairId,
-//         privateKey,
-//         dateLessThan: new Date(Date.now() + 60 * 60 * 1000),
-//       });
-//     } else {
-//       // Fallback to direct S3 public URL
-//       fileUrl = `https://${process.env.S3_BUCKET_NAME}.s3.${process.env.AWS_REGION}.amazonaws.com/${key}`;
-//     }
-
-//     return res.status(200).json({
-//       success: true,
-//       url: fileUrl,
-//       message: "File uploaded successfully",
-//     });
-//   } catch (error) {
-//     console.error("Upload error:", error);
-//     return res.status(500).json({
-//       success: false,
-//       error: "Internal server error",
-//     });
-//   }
-// };
+/**
+ * Helper to map array of file keys into URLs
+ */
+export const mapFilesToUrls = (keys: string[] = []): string[] => {
+  return keys.map((k) => generateFileUrl(k));
+};

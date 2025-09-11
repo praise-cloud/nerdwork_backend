@@ -9,6 +9,7 @@ import {
   doublePrecision,
 } from "drizzle-orm/pg-core";
 import { comics, comicStatusEnum } from "./comic"; // assuming you already have comics entity
+import { readerProfile } from "./profile";
 
 // Enum for chapter type
 export const chapterTypeEnum = pgEnum("chapter_type", ["free", "paid"]);
@@ -28,4 +29,17 @@ export const chapters = pgTable("chapters", {
   uniqueCode: varchar("unique_code", { length: 4 }).unique().notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const paidChapters = pgTable("paid_Chapters", {
+  id: uuid("id").primaryKey().defaultRandom(),
+  readerId: uuid("reader_id")
+    .notNull()
+    .references(() => readerProfile.id, { onDelete: "cascade" }),
+
+  chapterId: uuid("chapter_id")
+    .notNull()
+    .references(() => chapters.id, { onDelete: "cascade" }),
+  paidAt: timestamp("paid_at", { mode: "date" }).notNull().defaultNow(),
+  updatedAt: timestamp("updated_at", { mode: "date" }).notNull().defaultNow(),
 });

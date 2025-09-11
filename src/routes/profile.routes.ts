@@ -4,7 +4,7 @@ import {
   addReaderProfile,
   getCreatorProfile,
   getReaderProfile,
-  updateCreatorProfilePin,
+  updateCreatorProfile,
   updateReaderProfilePin,
 } from "../controller/profile.controller";
 
@@ -55,7 +55,7 @@ router.put("/reader/pin", updateReaderProfilePin);
  * @access  Private (Jwt required)
  */
 
-router.put("/creator/pin", updateCreatorProfilePin);
+router.put("/creator", updateCreatorProfile);
 
 /**
  * @swagger
@@ -306,12 +306,12 @@ router.put("/creator/pin", updateCreatorProfilePin);
 
 /**
  * @swagger
- * /profile/creator/pin:
+ * /profile/creator:
  *   put:
- *     summary: Update reader profile PIN
- *     description: Updates the reader profile PIN for the authenticated user. The PIN is securely hashed before storing.
+ *     summary: Update creator profile Wallet Address
+ *     description: Updates the creator profile Wallet address for the authenticated user.
  *     tags:
- *       - Reader Profile
+ *       - Creator Profile
  *     security:
  *       - bearerAuth: []
  *     requestBody:
@@ -321,15 +321,15 @@ router.put("/creator/pin", updateCreatorProfilePin);
  *           schema:
  *             type: object
  *             required:
- *               - pin
+ *               - address
  *             properties:
- *               pin:
+ *               address:
  *                 type: string
- *                 description: 4+ digit PIN to set for the profile
- *                 example: "1234"
+ *                 description: wallet address to set for the profile
+ *                 example: "069xxxx7qn"
  *     responses:
  *       200:
- *         description: PIN updated successfully
+ *         description: Profile updated successfully
  *         content:
  *           application/json:
  *             schema:
@@ -340,17 +340,7 @@ router.put("/creator/pin", updateCreatorProfilePin);
  *                   example: true
  *                 message:
  *                   type: string
- *                   example: "PIN updated successfully"
- *       400:
- *         description: Invalid request (e.g., missing or too short PIN)
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 message:
- *                   type: string
- *                   example: "PIN must be at least 4 digits"
+ *                   example: "Profile updated successfully"
  *       401:
  *         description: Unauthorized (missing/invalid token)
  *         content:

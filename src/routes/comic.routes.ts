@@ -5,6 +5,7 @@ import {
   fetchComicBySlug,
   fetchAllComics,
   fetchComicBySlugForReaders,
+  deleteComicBySlug,
 } from "../controller/comic.controller";
 
 const router = Router();
@@ -14,6 +15,7 @@ router.get("/mine", fetchAllComicByJwt);
 router.get("/all-comics", fetchAllComics);
 router.get("/:slug", fetchComicBySlug);
 router.get("/reader/:slug", fetchComicBySlugForReaders);
+router.delete("/delete/:slug", deleteComicBySlug);
 
 /**
  * @swagger
@@ -191,6 +193,29 @@ router.get("/reader/:slug", fetchComicBySlugForReaders);
  *                     $ref: '#/components/schemas/Comic'
  *       400:
  *         description: Failed to fetch comics
+ */
+
+/**
+ * @swagger
+ * /comics/delete/{slug}:
+ *   delete:
+ *     summary: Delete a comic by slug
+ *     tags:
+ *       - comics
+ *     parameters:
+ *       - in: path
+ *         name: slug
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: slug of the comic
+ *     responses:
+ *       200:
+ *         description: comic deleted
+ *       404:
+ *         description: comic not found
+ *       500:
+ *         description: Server error
  */
 
 /**

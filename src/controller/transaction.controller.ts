@@ -2,7 +2,12 @@ import { eq, and } from "drizzle-orm";
 import { db } from "../config/db";
 import { userTransactions } from "../model/userTransaction";
 import { creatorTransactions } from "../model/creatorTransaction";
-import { userProfiles, creatorProfile, readerProfile } from "../model/schema";
+import {
+  userProfiles,
+  creatorProfile,
+  readerProfile,
+  paidChapters,
+} from "../model/schema";
 
 // ===============================
 // USER TRANSACTION FUNCTIONS
@@ -252,6 +257,7 @@ export const updateCreatorWalletBalance = async (
  * Process content purchase - creates user spend transaction and creator earning transaction
  */
 export const processContentPurchase = async (
+  readerId: string,
   userId: string,
   creatorId: string,
   contentId: string,
@@ -312,6 +318,16 @@ export const processContentPurchase = async (
 
       if (!creatorBalanceUpdate.success) {
         throw new Error("Failed to update creator balance");
+      }
+
+      try {
+        await db.insert(paidChapters).values({
+          readerId,
+          chapterId: contentId,
+        });
+      } catch (error) {
+        console.log("Failed to add to paid chapter", error);
+        throw new Error("Failed to add to paid chapters");
       }
 
       return {

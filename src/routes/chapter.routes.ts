@@ -3,6 +3,8 @@ import {
   buyChapter,
   createChapter,
   createDraft,
+  deleteChapter,
+  fetchAllPaidChapters,
   fetchChapterByUniqueCode,
   fetchChapterPagesById,
   fetchChaptersByComicSlugForCreators,
@@ -12,84 +14,67 @@ import {
 
 const router = Router();
 
-router.post("/create", createChapter);
-router.get("/by-comic/creator/:slug", fetchChaptersByComicSlugForCreators);
-router.get("/by-comic/reader/:slug", fetchChaptersByComicSlugForReaders);
-router.get("/by-code/:code", fetchChapterByUniqueCode);
-router.get("/pages/:chapterId", fetchChapterPagesById);
-router.post("/draft", createDraft);
-router.post("/draft/publish", publishDraft);
-router.post("/purchase", buyChapter);
-
 /**
  * @swagger
  * tags:
  *   name: Chapters
  *   description: Endpoints for managing comic chapters and drafts
- *
+ */
+
+/**
+ * @swagger
  * /chapters/create:
  *   post:
- *     summary: Create a new chapter
- *     description: Creates a new chapter for a comic, assigns a unique 4-digit code, and increments the comic's chapter count.
- *     tags: [Chapters]
+ *     summary: Create and publish a new chapter
+ *     tags:
+ *       - Chapters
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - title
- *               - chapterType
- *               - comicId
- *               - pages
  *             properties:
  *               title:
  *                 type: string
- *                 example: "Chapter 1: The Beginning"
  *               chapterType:
  *                 type: string
  *                 enum: [free, paid]
- *                 example: "paid"
  *               price:
  *                 type: number
- *                 example: 500
  *               summary:
  *                 type: string
- *                 example: "This is the intro chapter to the comic."
  *               pages:
  *                 type: array
  *                 items:
  *                   type: string
- *                 example: ["page1.png", "page2.png"]
  *               comicId:
  *                 type: string
- *                 format: uuid
- *                 example: "4878476e-098d-4c87-b5ba-b2aedf13f43b"
+ *             required:
+ *               - title
+ *               - chapterType
+ *               - comicId
  *     responses:
  *       201:
  *         description: Chapter created successfully
- *       400:
- *         description: Invalid input
  *       500:
- *         description: Internal server error
- *
+ *         description: Server error
+ */
+router.post("/create", createChapter);
+
+/**
+ * @swagger
  * /chapters/draft:
  *   post:
- *     summary: Save a chapter as draft
- *     description: Creates a draft chapter that can later be published. Increments the comic's draft count.
- *     tags: [Chapters]
+ *     summary: Create a draft chapter
+ *     tags:
+ *       - Chapters
  *     requestBody:
  *       required: true
  *       content:
  *         application/json:
  *           schema:
  *             type: object
- *             required:
- *               - title
- *               - chapterType
- *               - comicId
- *               - pages
  *             properties:
  *               title:
  *                 type: string
@@ -106,99 +91,125 @@ router.post("/purchase", buyChapter);
  *                   type: string
  *               comicId:
  *                 type: string
- *                 format: uuid
+ *             required:
+ *               - title
+ *               - chapterType
+ *               - comicId
  *     responses:
  *       201:
- *         description: Draft chapter created successfully
+ *         description: Draft created successfully
  *       500:
- *         description: Internal server error
- *
+ *         description: Server error
+ */
+router.post("/draft", createDraft);
+
+/**
+ * @swagger
  * /chapters/by-comic/creator/{slug}:
  *   get:
- *     summary: Get all chapters by comic slug
- *     description: Fetches all chapters [both draft and published] that belong to a given comic, identified by its slug.
- *     tags: [Chapters]
+ *     summary: Fetch all chapters of a comic (for creators)
+ *     tags:
+ *       - Chapters
  *     parameters:
  *       - in: path
  *         name: slug
  *         schema:
  *           type: string
  *         required: true
- *         description: The slug of the comic
+ *         description: Slug of the comic
  *     responses:
  *       200:
- *         description: List of chapters
+ *         description: List of all chapters for the comic
  *       404:
  *         description: Comic not found
  *       500:
- *         description: Internal server error
- *
+ *         description: Server error
+ */
+router.get("/by-comic/creator/:slug", fetchChaptersByComicSlugForCreators);
+
+/**
+ * @swagger
  * /chapters/by-comic/reader/{slug}:
  *   get:
- *     summary: Get all chapters by comic slug for readers
- *     description: Fetches all published chapters that belong to a given comic, identified by its slug.
- *     tags: [Chapters]
+ *     summary: Fetch published chapters of a comic (for readers)
+ *     tags:
+ *       - Chapters
+ *     security:
+ *       - bearerAuth: []
  *     parameters:
  *       - in: path
  *         name: slug
  *         schema:
  *           type: string
  *         required: true
- *         description: The slug of the comic
+ *         description: Slug of the comic
  *     responses:
  *       200:
- *         description: List of chapters
+ *         description: List of published chapters for the comic with payment info
+ *       401:
+ *         description: Unauthorized
  *       404:
  *         description: Comic not found
  *       500:
- *         description: Internal server error
- *
+ *         description: Server error
+ */
+router.get("/by-comic/reader/:slug", fetchChaptersByComicSlugForReaders);
+
+/**
+ * @swagger
  * /chapters/by-code/{code}:
  *   get:
- *     summary: Get a chapter by unique code
- *     description: Fetch a single chapter using its unique 4-digit code.
- *     tags: [Chapters]
+ *     summary: Fetch a chapter by unique code
+ *     tags:
+ *       - Chapters
  *     parameters:
  *       - in: path
  *         name: code
  *         schema:
  *           type: string
  *         required: true
- *         description: The unique 4-digit code of the chapter
+ *         description: Unique code of the chapter
  *     responses:
  *       200:
  *         description: Chapter details
  *       404:
  *         description: Chapter not found
  *       500:
- *         description: Internal server error
- *
+ *         description: Server error
+ */
+router.get("/by-code/:code", fetchChapterByUniqueCode);
+
+/**
+ * @swagger
  * /chapters/pages/{chapterId}:
  *   get:
- *     summary: Get chapter pages by chapter ID
- *     description: Fetches all pages of a chapter using its ID.
- *     tags: [Chapters]
+ *     summary: Fetch chapter pages by chapter ID
+ *     tags:
+ *       - Chapters
  *     parameters:
  *       - in: path
  *         name: chapterId
  *         schema:
  *           type: string
- *           format: uuid
  *         required: true
- *         description: The ID of the chapter
+ *         description: ID of the chapter
  *     responses:
  *       200:
- *         description: List of chapter pages
+ *         description: List of page URLs
  *       404:
  *         description: Chapter not found
  *       500:
- *         description: Internal server error
- *
- * /chapters/publish/draft:
+ *         description: Server error
+ */
+router.get("/pages/:chapterId", fetchChapterPagesById);
+
+/**
+ * @swagger
+ * /chapters/draft/publish:
  *   post:
  *     summary: Publish a draft chapter
- *     description: Publishes a chapter that was in the draft increments the chapter serial number and comics chapter numbers and also deducts one from comics no of drafts.
- *     tags: [Chapters]
+ *     tags:
+ *       - Chapters
  *     requestBody:
  *       required: true
  *       content:
@@ -206,24 +217,53 @@ router.post("/purchase", buyChapter);
  *           schema:
  *             type: object
  *             required:
+ *               - draftUniqCode
  *               - comicId
- *               - chapterUniqueCode
  *             properties:
  *               draftUniqCode:
  *                 type: string
  *               comicId:
  *                 type: string
- *                 format: uuid
  *     responses:
- *       201:
- *         description: Draft Published successfully
+ *       200:
+ *         description: Draft published successfully
+ *       404:
+ *         description: Chapter not found
  *       500:
- *         description: Internal server error
- *
+ *         description: Server error
+ */
+router.post("/draft/publish", publishDraft);
+
+/**
+ * @swagger
+ * /chapters/delete/{code}:
+ *   delete:
+ *     summary: Delete a chapter by unique code
+ *     tags:
+ *       - Chapters
+ *     parameters:
+ *       - in: path
+ *         name: code
+ *         schema:
+ *           type: string
+ *         required: true
+ *         description: Unique code of the chapter
+ *     responses:
+ *       200:
+ *         description: Chapter deleted and serial numbers resequenced
+ *       404:
+ *         description: Chapter or Comic not found
+ *       500:
+ *         description: Server error
+ */
+router.delete("/delete/:code", deleteChapter);
+
+/**
+ * @swagger
  * /chapters/purchase:
  *   post:
  *     summary: Purchase a comic chapter
- *     description: Allows a reader to purchase a comic chapter using NWT after verifying their PIN.
+ *     description: Allows a reader to purchase a paid chapter using NWT tokens after verifying their PIN.
  *     tags: [Chapters]
  *     security:
  *       - bearerAuth: []
@@ -241,84 +281,45 @@ router.post("/purchase", buyChapter);
  *               nwtAmount:
  *                 type: number
  *                 example: 50
- *                 description: Amount of NWT to spend
  *               pin:
  *                 type: string
  *                 example: "1234"
- *                 description: Reader's transaction PIN
  *               chapterId:
  *                 type: string
  *                 example: "chap_abc123"
- *                 description: ID of the chapter being purchased
  *     responses:
  *       200:
  *         description: Chapter purchased successfully
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: true
- *                 message:
- *                   type: string
- *                   example: Chapter purchased successfully!
- *                 data:
- *                   type: object
- *                   properties:
- *                     chapter:
- *                       type: object
- *                       properties:
- *                         id:
- *                           type: string
- *                           example: "chap_abc123"
- *                         title:
- *                           type: string
- *                           example: "Chapter 1: The Awakening"
- *                         chapterNumber:
- *                           type: integer
- *                           example: 1
- *                     comic:
- *                       type: object
- *                       properties:
- *                         id:
- *                           type: string
- *                           example: "comic_123"
- *                         title:
- *                           type: string
- *                           example: "My Awesome Comic"
- *                         slug:
- *                           type: string
- *                           example: "my-awesome-comic"
- *                     creator:
- *                       type: object
- *                       properties:
- *                         id:
- *                           type: string
- *                           example: "creator_456"
- *                         name:
- *                           type: string
- *                           example: "John Doe"
  *       400:
- *         description: Invalid request (e.g. incorrect PIN, insufficient balance, or invalid chapter)
- *         content:
- *           application/json:
- *             schema:
- *               type: object
- *               properties:
- *                 success:
- *                   type: boolean
- *                   example: false
- *                 message:
- *                   type: string
- *                   example: Incorrect PIN
+ *         description: Invalid request (e.g., incorrect PIN, insufficient balance)
  *       401:
- *         description: Unauthorized (missing or invalid token)
+ *         description: Unauthorized
  *       404:
- *         description: Chapter, Comic, Creator, or Reader not found
+ *         description: Reader, Chapter, Comic, or Creator not found
  *       500:
  *         description: Internal server error
  */
+router.post("/purchase", buyChapter);
+
+/**
+ * @swagger
+ * /chapters/paid:
+ *   get:
+ *     summary: Get all paid chapters for a reader
+ *     description: Returns a list of all chapters purchased by the authenticated reader.
+ *     tags: [Chapters]
+ *     security:
+ *       - bearerAuth: []
+ *     responses:
+ *       200:
+ *         description: List of paid chapters
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Reader not found
+ *       500:
+ *         description: Internal server error
+ */
+router.get("/paid", fetchAllPaidChapters);
 
 export default router;

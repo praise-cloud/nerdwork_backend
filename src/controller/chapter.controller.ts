@@ -1,28 +1,31 @@
 import { and, desc, eq, sql } from "drizzle-orm";
 import { db } from "../config/db";
-import { chapters, chapterTypeEnum } from "../model/chapter";
+import { chapters, chapterTypeEnum, paidChapters } from "../model/chapter";
 import { comics } from "../model/comic";
 import { creatorProfile, readerProfile } from "../model/profile";
 import { processContentPurchase } from "./transaction.controller";
 import jwt from "jsonwebtoken";
 import bcrypt from "bcrypt";
+import { mapFilesToUrls } from "./file.controller";
 
 export const createChapter = async (req, res) => {
   try {
     const { title, chapterType, price, summary, pages, comicId } = req.body;
 
     const finalPrice = chapterType === "free" ? 0 : price;
-
     const uniqueCode = Math.floor(1000 + Math.random() * 9000).toString();
 
     const [lastChapter] = await db
-      .select({ serialNo: chapters.serialNo })
+      .select({ maxSerial: sql<number>`MAX(${chapters.serialNo})` })
       .from(chapters)
-      .where(eq(chapters.comicId, comicId))
-      .orderBy(desc(chapters.serialNo)) // get the highest serialNo
-      .limit(1);
+      .where(
+        and(
+          eq(chapters.comicId, comicId),
+          eq(chapters.chapterStatus, "published")
+        )
+      );
 
-    const serialNo = lastChapter ? lastChapter.serialNo + 1 : 1;
+    const nextSerial = (lastChapter?.maxSerial || 0) + 1;
 
     const [newChapter] = await db
       .insert(chapters)
@@ -33,7 +36,7 @@ export const createChapter = async (req, res) => {
         summary,
         chapterStatus: "published",
         pages,
-        serialNo,
+        serialNo: nextSerial,
         comicId,
         uniqueCode,
       })
@@ -98,10 +101,17 @@ export const createDraft = async (req, res) => {
   }
 };
 
-// ✅ Fetch all chapters by Comic Slug for readers
 export const fetchChaptersByComicSlugForReaders = async (req, res) => {
   try {
     const { slug } = req.params;
+
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+    const token = authHeader.split(" ")[1];
+    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
+    const userId = decoded.userId;
 
     const [comic] = await db.select().from(comics).where(eq(comics.slug, slug));
     if (!comic) {
@@ -125,6 +135,13 @@ export const fetchChaptersByComicSlugForReaders = async (req, res) => {
         )
       );
 
+    const paid = await db
+      .select({ chapterId: paidChapters.chapterId })
+      .from(paidChapters)
+      .where(eq(paidChapters.readerId, userId));
+
+    const paidChapterIds = new Set(paid.map((p) => p.chapterId));
+
     const data = allChapters.map((chapter) => ({
       id: chapter.id,
       title: chapter.title,
@@ -132,7 +149,7 @@ export const fetchChaptersByComicSlugForReaders = async (req, res) => {
       chapterStatus: chapter.chapterStatus,
       price: chapter.price,
       summary: chapter.summary,
-      pages: chapter.pages,
+      pages: mapFilesToUrls(chapter.pages),
       serialNo: chapter.serialNo,
       uniqueCode: chapter.uniqueCode,
       createdAt: chapter.createdAt,
@@ -140,6 +157,7 @@ export const fetchChaptersByComicSlugForReaders = async (req, res) => {
       creatorName: creator.creatorName,
       comicSlug: comic.slug,
       comicTitle: comic.title,
+      hasPaid: paidChapterIds.has(chapter.id),
     }));
 
     return res.status(200).json({
@@ -152,7 +170,6 @@ export const fetchChaptersByComicSlugForReaders = async (req, res) => {
   }
 };
 
-// ✅ Fetch all chapters by Comic Slug for creators
 export const fetchChaptersByComicSlugForCreators = async (req, res) => {
   try {
     const { slug } = req.params;
@@ -169,9 +186,25 @@ export const fetchChaptersByComicSlugForCreators = async (req, res) => {
       .from(chapters)
       .where(eq(chapters.comicId, comic.id));
 
+    const data = allChapters.map((chapter) => ({
+      id: chapter.id,
+      title: chapter.title,
+      chapterType: chapter.chapterType,
+      chapterStatus: chapter.chapterStatus,
+      price: chapter.price,
+      summary: chapter.summary,
+      pages: mapFilesToUrls(chapter.pages),
+      serialNo: chapter.serialNo,
+      uniqueCode: chapter.uniqueCode,
+      createdAt: chapter.createdAt,
+      updateAt: chapter.updatedAt,
+      comicSlug: comic.slug,
+      comicTitle: comic.title,
+    }));
+
     return res.status(200).json({
       success: true,
-      data: allChapters,
+      data,
     });
   } catch (err: any) {
     console.error("Fetch Chapters Error:", err);
@@ -179,7 +212,6 @@ export const fetchChaptersByComicSlugForCreators = async (req, res) => {
   }
 };
 
-// ✅ Fetch single chapter by unique 4-digit code
 export const fetchChapterByUniqueCode = async (req, res) => {
   try {
     const { code } = req.params;
@@ -195,9 +227,23 @@ export const fetchChapterByUniqueCode = async (req, res) => {
         .json({ success: false, message: "Chapter not found" });
     }
 
+    const data = {
+      id: chapter.id,
+      title: chapter.title,
+      chapterType: chapter.chapterType,
+      chapterStatus: chapter.chapterStatus,
+      price: chapter.price,
+      summary: chapter.summary,
+      pages: mapFilesToUrls(chapter.pages),
+      serialNo: chapter.serialNo,
+      uniqueCode: chapter.uniqueCode,
+      createdAt: chapter.createdAt,
+      updateAt: chapter.updatedAt,
+    };
+
     return res.status(200).json({
       success: true,
-      data: chapter,
+      data,
     });
   } catch (err: any) {
     console.error("Fetch Chapter by Code Error:", err);
@@ -207,14 +253,7 @@ export const fetchChapterByUniqueCode = async (req, res) => {
 
 export const publishDraft = async (req, res) => {
   try {
-    const { draftUniqCode, comicId } = req.params;
-
-    const [{ count }] = await db
-      .select({ count: sql<number>`count(*)` })
-      .from(chapters)
-      .where(eq(chapters.comicId, comicId));
-
-    const serialNo = (count ?? 0) + 1;
+    const { draftUniqCode, comicId } = req.body;
 
     const [chapter] = await db
       .select()
@@ -226,11 +265,24 @@ export const publishDraft = async (req, res) => {
         .status(404)
         .json({ success: false, message: "Chapter not found" });
     }
+
+    const [lastChapter] = await db
+      .select({ maxSerial: sql<number>`MAX(${chapters.serialNo})` })
+      .from(chapters)
+      .where(
+        and(
+          eq(chapters.comicId, comicId),
+          eq(chapters.chapterStatus, "published")
+        )
+      );
+
+    const nextSerial = (lastChapter?.maxSerial || 0) + 1;
+
     await db
       .update(chapters)
       .set({
         chapterStatus: "published",
-        serialNo,
+        serialNo: nextSerial,
       })
       .where(eq(chapters.id, chapter.id));
 
@@ -245,15 +297,14 @@ export const publishDraft = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      data: chapter,
+      message: "Draft published successfully",
     });
   } catch (err: any) {
-    console.error("publish draft error Error:", err);
+    console.error("Publish Draft Error:", err);
     return res.status(500).json({ success: false, message: err.message });
   }
 };
 
-// ✅ Fetch chapter pages by chapter ID
 export const fetchChapterPagesById = async (req, res) => {
   try {
     const { chapterId } = req.params;
@@ -271,14 +322,69 @@ export const fetchChapterPagesById = async (req, res) => {
 
     return res.status(200).json({
       success: true,
-      data: chapter.pages,
+      data: mapFilesToUrls(chapter.pages),
     });
   } catch (err: any) {
     console.error("Fetch Pages Error:", err);
     return res.status(500).json({ success: false, message: err.message });
   }
 };
+export const deleteChapter = async (req, res) => {
+  try {
+    const { code } = req.params;
 
+    const [chapter] = await db
+      .select()
+      .from(chapters)
+      .where(eq(chapters.uniqueCode, code));
+    if (!chapter) {
+      return res.status(404).json({ message: "Chapter with code not found" });
+    }
+
+    const [comic] = await db
+      .select()
+      .from(comics)
+      .where(eq(comics.id, chapter.comicId));
+    if (!comic) {
+      return res.status(404).json({ message: "comic not found for chapter" });
+    }
+
+    await db.delete(chapters).where(eq(chapters.uniqueCode, code));
+
+    const publishedChapters = await db
+      .select()
+      .from(chapters)
+      .where(
+        and(
+          eq(chapters.comicId, comic.id),
+          eq(chapters.chapterStatus, "published")
+        )
+      )
+      .orderBy(chapters.serialNo);
+
+    for (let i = 0; i < publishedChapters.length; i++) {
+      await db
+        .update(chapters)
+        .set({ serialNo: i + 1 })
+        .where(eq(chapters.id, publishedChapters[i].id));
+    }
+
+    await db
+      .update(comics)
+      .set({
+        noOfChapters: sql`${comics.noOfChapters} - 1`,
+      })
+      .where(eq(comics.id, comic.id));
+
+    return res.status(200).json({
+      success: true,
+      message: "Chapter deleted and serial numbers resequenced",
+    });
+  } catch (err: any) {
+    console.error("Delete Chapter Error:", err);
+    return res.status(500).json({ success: false, message: err.message });
+  }
+};
 export const buyChapter = async (req: any, res: any) => {
   try {
     const { nwtAmount, pin, chapterId } = req.body;
@@ -363,6 +469,7 @@ export const buyChapter = async (req: any, res: any) => {
 
     // Process the purchase using transaction system
     const purchaseResult = await processContentPurchase(
+      reader.id,
       reader.fullName, // User making the purchase
       comic.creatorId, // Creator receiving payment
       chapterId, // Content being purchased (chapter ID)
@@ -424,5 +531,62 @@ export const buyChapter = async (req: any, res: any) => {
       message: "Failed to purchase chapter",
       error: error.message,
     });
+  }
+};
+
+export const fetchAllPaidChapters = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ success: false, message: "Unauthorized" });
+    }
+    const token = authHeader.split(" ")[1];
+    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
+    const userId = decoded.userId;
+
+    const [reader] = await db
+      .select()
+      .from(readerProfile)
+      .where(eq(readerProfile.userId, userId));
+    if (!reader) {
+      return res.status(404).json({ message: "Reader With Jwt not found" });
+    }
+
+    // 2️⃣ Fetch all paid chapters for this reader
+    const paid = await db
+      .select({
+        chapterId: paidChapters.chapterId,
+        paidAt: paidChapters.paidAt,
+        title: chapters.title,
+        serialNo: chapters.serialNo,
+        comicId: chapters.comicId,
+        comicTitle: comics.title,
+        comicSlug: comics.slug,
+      })
+      .from(paidChapters)
+      .innerJoin(chapters, eq(paidChapters.chapterId, chapters.id))
+      .innerJoin(comics, eq(chapters.comicId, comics.id))
+      .where(eq(paidChapters.readerId, reader.id));
+
+    // 3️⃣ Map chapter pages with signed URLs (optional)
+    const data = paid.map((record) => ({
+      chapterId: record.chapterId,
+      title: record.title,
+      serialNo: record.serialNo,
+      comicId: record.comicId,
+      comicTitle: record.comicTitle,
+      comicSlug: record.comicSlug,
+      paidAt: record.paidAt,
+      // optional: if you want to return the full pages with signed urls
+      // pages: mapFilesToUrls(record.pages),
+    }));
+
+    return res.status(200).json({
+      success: true,
+      data,
+    });
+  } catch (err: any) {
+    console.error("Fetch Paid Chapters Error:", err);
+    return res.status(500).json({ success: false, message: err.message });
   }
 };

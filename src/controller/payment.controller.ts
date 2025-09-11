@@ -1,6 +1,11 @@
 import { eq } from "drizzle-orm";
 import { db } from "../config/db";
-import { payments, userProfiles } from "../model/schema";
+import {
+  creatorProfile,
+  payments,
+  readerProfile,
+  userProfiles,
+} from "../model/schema";
 import axios from "axios";
 import { sdk } from "../config/helio.config";
 import {
@@ -22,6 +27,7 @@ import {
   updateUserTransactionStatus,
   updateUserWalletBalance,
 } from "./transaction.controller";
+import { userTransactions } from "../model/userTransaction";
 
 export const createPaymentLink = async (req: any, res: any) => {
   const authHeader = req.headers.authorization;
@@ -255,5 +261,69 @@ export const handlePayment = async (req: any, res: any) => {
   } catch (error: any) {
     console.error("Error handling payment webhook:", error.message);
     res.status(500).json({ error: "Internal Server Error" });
+  }
+};
+
+export const fetchTransactionByJwtForReaders = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const token = authHeader.split(" ")[1];
+    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
+
+    const userId = decoded.userId;
+
+    const [reader] = await db
+      .select()
+      .from(readerProfile)
+      .where(eq(readerProfile.userId, userId));
+    if (!reader) {
+      return res.status(404).json({ message: "Reader With Jwt not found" });
+    }
+
+    const userTransaction = await db
+      .select()
+      .from(userTransactions)
+      .where(eq(userTransactions.userId, reader.id));
+
+    return res.json({ transaction: userTransaction });
+  } catch (err) {
+    console.error(err);
+    return res.status(400).json({ message: "Failed to fetch Transactions" });
+  }
+};
+
+export const fetchTransactionByJwtForCreators = async (req, res) => {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith("Bearer ")) {
+      return res.status(401).json({ message: "Unauthorized" });
+    }
+
+    const token = authHeader.split(" ")[1];
+    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
+
+    const userId = decoded.userId;
+
+    const [creator] = await db
+      .select()
+      .from(creatorProfile)
+      .where(eq(creatorProfile.userId, userId));
+    if (!creator) {
+      return res.status(404).json({ message: "Creator With Jwt not found" });
+    }
+
+    const userTransaction = await db
+      .select()
+      .from(userTransactions)
+      .where(eq(userTransactions.userId, creator.id));
+
+    return res.json({ transaction: userTransaction });
+  } catch (err) {
+    console.error(err);
+    return res.status(400).json({ message: "Failed to fetch Transactions" });
   }
 };

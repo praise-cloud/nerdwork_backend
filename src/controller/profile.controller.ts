@@ -164,13 +164,9 @@ export const updateReaderProfilePin = async (req, res) => {
   }
 };
 
-export const updateCreatorProfilePin = async (req, res) => {
+export const updateCreatorProfile = async (req, res) => {
   try {
-    const { pin } = req.body;
-
-    if (!pin || pin.length < 4) {
-      return res.status(400).json({ message: "PIN must be at least 4 digits" });
-    }
+    const { walletAddress } = req.body;
 
     // ✅ Auth check
     const authHeader = req.headers.authorization;
@@ -183,7 +179,6 @@ export const updateCreatorProfilePin = async (req, res) => {
 
     const userId = decoded.userId;
 
-    // ✅ Get creator profile
     const [creator] = await db
       .select()
       .from(creatorProfile)
@@ -193,22 +188,17 @@ export const updateCreatorProfilePin = async (req, res) => {
       return res.status(404).json({ message: "Profile not found" });
     }
 
-    // ✅ Hash the PIN before saving
-    const salt = await bcrypt.genSalt(10);
-    const hashedPin = await bcrypt.hash(pin, salt);
-
-    // ✅ Update profile with hashed pin
     await db
       .update(creatorProfile)
-      .set({ pinHash: hashedPin })
+      .set({ walletAddress: walletAddress })
       .where(eq(creatorProfile.id, creator.id));
 
     return res.json({
       success: true,
-      message: "PIN updated successfully",
+      message: "Profile updated successfully",
     });
   } catch (err) {
-    console.error("Update Profile PIN Error:", err);
+    console.error("Update Profile  Error:", err);
     return res.status(401).json({ message: "Invalid or expired token" });
   }
 };
