@@ -129,7 +129,7 @@ export const updateUserWalletBalance = async (
     const [reader] = await db
       .select()
       .from(readerProfile)
-      .where(eq(readerProfile.userId, userId));
+      .where(eq(readerProfile.id, userId));
 
     if (!reader) {
       return { success: false, error: "User profile not found" };
