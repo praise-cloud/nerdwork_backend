@@ -205,28 +205,20 @@ export const fetchAllComics = async (req, res) => {
       .from(comics)
       .where(eq(comics.comicStatus, "published"));
 
-    const [creator] = await db
-      .select()
-      .from(creatorProfile)
-      .where(eq(creatorProfile.id, comics.creatorId));
+    const data = await Promise.all(
+      publishedComics.map(async (chapter) => {
+        const [creator] = await db
+          .select()
+          .from(creatorProfile)
+          .where(eq(creatorProfile.id, chapter.creatorId));
 
-    const data = publishedComics.map((chapter) => ({
-      id: chapter.id,
-      title: chapter.title,
-      language: chapter.language,
-      ageRating: chapter.ageRating,
-      noOfChapters: chapter.noOfChapters,
-      noOfDrafts: chapter.noOfDrafts,
-      description: chapter.description,
-      image: generateFileUrl(chapter.image),
-      comicStatus: chapter.comicStatus,
-      genre: chapter.genre,
-      tags: chapter.tags,
-      slug: chapter.slug,
-      creatorName: creator.creatorName,
-      createdAt: chapter.createdAt,
-      updatedAt: chapter.updatedAt,
-    }));
+        return {
+          ...chapter,
+          image: generateFileUrl(chapter.image),
+          creatorName: creator?.creatorName || "Unknown",
+        };
+      })
+    );
 
     return res.json({ comics: data });
   } catch (err) {
