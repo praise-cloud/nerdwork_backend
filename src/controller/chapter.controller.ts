@@ -162,6 +162,8 @@ export const fetchChaptersByComicSlugForReaders = async (req, res) => {
 
     const paidChapterIds = new Set(paid.map((p) => p.chapterId));
 
+    console.log("Paid Chapters", paidChapterIds);
+
     const data = allChapters.map((chapter) => ({
       id: chapter.id,
       title: chapter.title,
