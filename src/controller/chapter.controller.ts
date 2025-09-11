@@ -133,6 +133,8 @@ export const fetchChaptersByComicSlugForReaders = async (req, res) => {
     const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
     const userId = decoded.userId;
 
+    console.log("user", userId);
+
     const [comic] = await db.select().from(comics).where(eq(comics.slug, slug));
     if (!comic) {
       return res
