@@ -10,6 +10,7 @@ export const createComic = async (req, res) => {
   try {
     const { title, language, ageRating, description, image, genre, tags } =
       req.body;
+
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith("Bearer ")) {
       return res.status(401).json({ message: "Unauthorized" });
@@ -17,7 +18,6 @@ export const createComic = async (req, res) => {
 
     const token = authHeader.split(" ")[1];
     const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
-
     const userId = decoded.userId;
 
     const [creator] = await db
@@ -27,6 +27,19 @@ export const createComic = async (req, res) => {
 
     if (!creator) {
       return res.status(404).json({ message: "User not found" });
+    }
+
+    // 🔥 Extract only the file path (if frontend sends full CloudFront URL)
+    let imagePath = image;
+    if (image && image.startsWith("http")) {
+      try {
+        const url = new URL(image);
+        imagePath = url.pathname.startsWith("/")
+          ? url.pathname.substring(1) // remove leading "/"
+          : url.pathname;
+      } catch (err) {
+        console.warn("Invalid image URL provided, storing raw value:", image);
+      }
     }
 
     const slug = `${title.toLowerCase().replace(/[^a-z0-9]+/g, "-")}-${
@@ -40,7 +53,7 @@ export const createComic = async (req, res) => {
         language,
         ageRating,
         description,
-        image,
+        image: imagePath,
         slug,
         genre,
         tags,

@@ -201,7 +201,7 @@ router.delete("/delete/:slug", deleteComicBySlug);
  *   delete:
  *     summary: Delete a comic by slug
  *     tags:
- *       - comics
+ *       - Comics
  *     parameters:
  *       - in: path
  *         name: slug
