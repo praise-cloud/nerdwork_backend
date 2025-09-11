@@ -159,6 +159,7 @@ export const fetchChaptersByComicSlugForReaders = async (req, res) => {
           eq(chapters.chapterStatus, "published")
         )
       );
+    console.log("Reader", reader);
 
     const paid = await db
       .select({ chapterId: paidChapters.chapterId })
