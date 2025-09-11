@@ -10,7 +10,7 @@ import {
   boolean,
 } from "drizzle-orm/pg-core";
 import { creatorProfile } from "./profile";
-import { userTransactions } from "./readerTransaction";
+import { userTransactions } from "./userTransaction";
 
 // Creator transaction type - creators earn and withdraw
 export const creatorTransactionTypeEnum = pgEnum("creator_transaction_type", [
