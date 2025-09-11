@@ -301,7 +301,7 @@ export const processContentPurchase = async (
           ? "chapter_purchase"
           : "comic_purchase",
         contentId,
-        userId,
+        readerId,
         userTransaction.transaction!.id
       );
 
