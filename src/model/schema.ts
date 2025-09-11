@@ -7,3 +7,5 @@ export * from "./loyaltyPoints";
 export * from "./comic";
 export * from "./chapter";
 export * from "./library";
+export * from "./creatorTransaction";
+export * from "./userTransaction";
