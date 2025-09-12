@@ -303,13 +303,12 @@ router.put("/creator", updateCreatorProfile);
  *                   type: string
  *                   example: "Profile not found"
  */
-
 /**
  * @swagger
  * /profile/creator:
  *   put:
  *     summary: Update creator profile Wallet Address
- *     description: Updates the creator profile Wallet address for the authenticated user.
+ *     description: Updates the creator profile wallet address for the authenticated user.
  *     tags:
  *       - Creator Profile
  *     security:
@@ -326,12 +325,12 @@ router.put("/creator", updateCreatorProfile);
  *             properties:
  *               address:
  *                 type: string
- *                 description: wallet address to set for the profile
+ *                 description: Wallet address to set for the profile
  *                 example: "069xxxx7qn"
- *                walletType:
- *                  type: string
- *                  description: wallet type should be solana or phantom
- *                  example: phantom
+ *               walletType:
+ *                 type: string
+ *                 description: Wallet type (e.g. solana, phantom)
+ *                 example: "phantom"
  *     responses:
  *       200:
  *         description: Profile updated successfully
@@ -357,7 +356,7 @@ router.put("/creator", updateCreatorProfile);
  *                   type: string
  *                   example: "Unauthorized"
  *       404:
- *         description: Reader profile not found
+ *         description: Creator profile not found
  *         content:
  *           application/json:
  *             schema:

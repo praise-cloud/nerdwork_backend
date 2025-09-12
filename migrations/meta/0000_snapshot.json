@@ -1,5 +1,5 @@
 {
-  "id": "5dd83592-46cc-40ff-9c68-eca9ca4e9283",
+  "id": "679a7487-ae90-4ede-804b-38b1af79357d",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1800,7 +1800,7 @@
       "name": "wallet_type_enum",
       "schema": "public",
       "values": [
-        "solana",
+        "solflare",
         "phantom"
       ]
     },

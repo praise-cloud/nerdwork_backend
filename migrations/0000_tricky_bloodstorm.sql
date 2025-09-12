@@ -1,4 +1,4 @@
-CREATE TYPE "public"."wallet_type_enum" AS ENUM('solana', 'phantom');--> statement-breakpoint
+CREATE TYPE "public"."wallet_type_enum" AS ENUM('solflare', 'phantom');--> statement-breakpoint
 CREATE TYPE "public"."comic_status_enum" AS ENUM('published', 'pending', 'scheduled', 'draft');--> statement-breakpoint
 CREATE TYPE "public"."chapter_type" AS ENUM('free', 'paid');--> statement-breakpoint
 CREATE TYPE "public"."creator_transaction_status" AS ENUM('pending', 'completed', 'processing', 'failed');--> statement-breakpoint

@@ -36,7 +36,10 @@ export const userProfiles = pgTable("user_profiles", {
 });
 
 // --- Wallet type enum (admin asked: "Solana or Phantom")
-export const walletTypeEnum = pgEnum("wallet_type_enum", ["solana", "phantom"]);
+export const walletTypeEnum = pgEnum("wallet_type_enum", [
+  "solflare",
+  "phantom",
+]);
 
 // --- CREATOR PROFILE ---
 export const creatorProfile = pgTable("creator_profile", {
