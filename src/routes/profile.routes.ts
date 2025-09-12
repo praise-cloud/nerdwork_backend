@@ -322,11 +322,16 @@ router.put("/creator", updateCreatorProfile);
  *             type: object
  *             required:
  *               - address
+ *               - walletType
  *             properties:
  *               address:
  *                 type: string
  *                 description: wallet address to set for the profile
  *                 example: "069xxxx7qn"
+ *                walletType:
+ *                  type: string
+ *                  description: wallet type should be solana or phantom
+ *                  example: phantom
  *     responses:
  *       200:
  *         description: Profile updated successfully

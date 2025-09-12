@@ -2,6 +2,7 @@ import { eq } from "drizzle-orm";
 import { db } from "../config/db";
 import {
   creatorProfile,
+  creatorTransactions,
   payments,
   readerProfile,
   userProfiles,
@@ -316,12 +317,12 @@ export const fetchTransactionByJwtForCreators = async (req, res) => {
       return res.status(404).json({ message: "Creator With Jwt not found" });
     }
 
-    const userTransaction = await db
+    const creatorTransaction = await db
       .select()
-      .from(userTransactions)
-      .where(eq(userTransactions.userId, creator.id));
+      .from(creatorTransactions)
+      .where(eq(creatorTransactions.creatorId, creator.id));
 
-    return res.json({ transaction: userTransaction });
+    return res.json({ transaction: creatorTransaction });
   } catch (err) {
     console.error(err);
     return res.status(400).json({ message: "Failed to fetch Transactions" });

@@ -166,7 +166,7 @@ export const updateReaderProfilePin = async (req, res) => {
 
 export const updateCreatorProfile = async (req, res) => {
   try {
-    const { address } = req.body;
+    const { address, walletType } = req.body;
 
     // ✅ Auth check
     const authHeader = req.headers.authorization;
@@ -190,7 +190,7 @@ export const updateCreatorProfile = async (req, res) => {
 
     await db
       .update(creatorProfile)
-      .set({ walletAddress: address })
+      .set({ walletAddress: address, walletType: walletType })
       .where(eq(creatorProfile.id, creator.id));
 
     return res.json({

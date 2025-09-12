@@ -1,5 +1,5 @@
 {
-  "id": "20a22290-2eef-4e9b-8d52-7f1642ffab1b",
+  "id": "5dd83592-46cc-40ff-9c68-eca9ca4e9283",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -575,7 +575,7 @@
         },
         "wallet_balance": {
           "name": "wallet_balance",
-          "type": "integer",
+          "type": "double precision",
           "primaryKey": false,
           "notNull": true,
           "default": 0
@@ -669,7 +669,7 @@
         },
         "wallet_balance": {
           "name": "wallet_balance",
-          "type": "integer",
+          "type": "double precision",
           "primaryKey": false,
           "notNull": true,
           "default": 0

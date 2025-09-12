@@ -133,8 +133,6 @@ export const fetchChaptersByComicSlugForReaders = async (req, res) => {
     const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
     const userId = decoded.userId;
 
-    console.log("user", userId);
-
     const [comic] = await db.select().from(comics).where(eq(comics.slug, slug));
     if (!comic) {
       return res
@@ -161,7 +159,6 @@ export const fetchChaptersByComicSlugForReaders = async (req, res) => {
           eq(chapters.chapterStatus, "published")
         )
       );
-    console.log("Reader", reader);
 
     const paid = await db
       .select({ chapterId: paidChapters.chapterId })
@@ -169,7 +166,6 @@ export const fetchChaptersByComicSlugForReaders = async (req, res) => {
       .where(eq(paidChapters.readerId, reader.id));
 
     const paidChapterIds = new Set(paid.map((p) => p.chapterId));
-    console.log("Paid Chapters", paidChapterIds);
 
     const data = allChapters.map((chapter) => ({
       id: chapter.id,
@@ -182,7 +178,7 @@ export const fetchChaptersByComicSlugForReaders = async (req, res) => {
       serialNo: chapter.serialNo,
       uniqueCode: chapter.uniqueCode,
       createdAt: chapter.createdAt,
-      updateAt: chapter.updatedAt,
+      updatedAt: chapter.updatedAt,
       creatorName: creator.creatorName,
       comicSlug: comic.slug,
       comicTitle: comic.title,
@@ -226,7 +222,7 @@ export const fetchChaptersByComicSlugForCreators = async (req, res) => {
       serialNo: chapter.serialNo,
       uniqueCode: chapter.uniqueCode,
       createdAt: chapter.createdAt,
-      updateAt: chapter.updatedAt,
+      updatedAt: chapter.updatedAt,
       comicSlug: comic.slug,
       comicTitle: comic.title,
     }));
@@ -267,7 +263,7 @@ export const fetchChapterByUniqueCode = async (req, res) => {
       serialNo: chapter.serialNo,
       uniqueCode: chapter.uniqueCode,
       createdAt: chapter.createdAt,
-      updateAt: chapter.updatedAt,
+      updatedAt: chapter.updatedAt,
     };
 
     return res.status(200).json({
@@ -581,7 +577,6 @@ export const fetchAllPaidChapters = async (req, res) => {
       return res.status(404).json({ message: "Reader With Jwt not found" });
     }
 
-    // 2️⃣ Fetch all paid chapters for this reader
     const paid = await db
       .select({
         chapterId: paidChapters.chapterId,
@@ -591,13 +586,13 @@ export const fetchAllPaidChapters = async (req, res) => {
         comicId: chapters.comicId,
         comicTitle: comics.title,
         comicSlug: comics.slug,
+        pages: chapters.pages,
       })
       .from(paidChapters)
       .innerJoin(chapters, eq(paidChapters.chapterId, chapters.id))
       .innerJoin(comics, eq(chapters.comicId, comics.id))
       .where(eq(paidChapters.readerId, reader.id));
 
-    // 3️⃣ Map chapter pages with signed URLs (optional)
     const data = paid.map((record) => ({
       chapterId: record.chapterId,
       title: record.title,
@@ -606,8 +601,7 @@ export const fetchAllPaidChapters = async (req, res) => {
       comicTitle: record.comicTitle,
       comicSlug: record.comicSlug,
       paidAt: record.paidAt,
-      // optional: if you want to return the full pages with signed urls
-      // pages: mapFilesToUrls(record.pages),
+      pages: mapFilesToUrls(record.pages),
     }));
 
     return res.status(200).json({
