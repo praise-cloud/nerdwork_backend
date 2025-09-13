@@ -87,6 +87,9 @@ export const createPaymentLink = async (req: any, res: any) => {
       `Purchase ${nwtAmount} NWT for $${amount} via Helio`
     );
 
+    console.log("nwt amount ", nwtAmount);
+    console.log("actual amount ", amount);
+
     if (!transactionResult.success) {
       console.error(
         "Failed to create transaction record:",
@@ -234,9 +237,7 @@ export const handlePayment = async (req: any, res: any) => {
         // Update user wallet balance
         const balanceResult = await updateUserWalletBalance(
           updateResult.transaction.userId,
-          parseFloat(
-            (Number(updateResult.transaction.nwtAmount) * 100).toFixed(0)
-          ),
+          parseFloat(Number(updateResult.transaction.nwtAmount).toFixed(0)),
           "add"
         );
         console.log("Balance update result:", balanceResult);
