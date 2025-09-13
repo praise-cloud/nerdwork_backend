@@ -235,7 +235,7 @@ export const handlePayment = async (req: any, res: any) => {
         const balanceResult = await updateUserWalletBalance(
           updateResult.transaction.userId,
           parseFloat(
-            (Number(updateResult.transaction.usdAmount) * 100).toFixed(0)
+            (Number(updateResult.transaction.nwtAmount) * 100).toFixed(0)
           ),
           "add"
         );
