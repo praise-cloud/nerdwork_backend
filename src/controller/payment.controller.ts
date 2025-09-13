@@ -82,13 +82,10 @@ export const createPaymentLink = async (req: any, res: any) => {
     const transactionResult = await createUserPurchaseTransaction(
       userId,
       nwtAmount,
-      amount / 100, // USD amount
+      amount, // USD amount
       helioResponse.id,
       `Purchase ${nwtAmount} NWT for $${amount} via Helio`
     );
-
-    console.log("nwt amount ", nwtAmount);
-    console.log("actual amount ", amount);
 
     if (!transactionResult.success) {
       console.error(

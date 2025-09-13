@@ -147,7 +147,6 @@ export const updateUserWalletBalance = async (
     }
 
     const currentBalance = reader.walletBalance || 0;
-    console.log("Current balance:", nwtAmount);
 
     const changeAmount = operation === "add" ? nwtAmount : -nwtAmount;
     const newBalance = currentBalance + changeAmount;
