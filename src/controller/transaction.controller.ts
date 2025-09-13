@@ -32,7 +32,6 @@ export const createUserPurchaseTransaction = async (
 
     if (!reader) {
       throw new Error("Reader profile not found");
-      
     }
 
     const [transaction] = await db
@@ -148,6 +147,8 @@ export const updateUserWalletBalance = async (
     }
 
     const currentBalance = reader.walletBalance || 0;
+    console.log("Current balance:", currentBalance);
+
     const changeAmount = operation === "add" ? nwtAmount : -nwtAmount;
     const newBalance = currentBalance + changeAmount;
 
