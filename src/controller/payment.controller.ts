@@ -82,7 +82,7 @@ export const createPaymentLink = async (req: any, res: any) => {
     const transactionResult = await createUserPurchaseTransaction(
       userId,
       nwtAmount,
-      amount/ 100, // USD amount
+      amount / 100, // USD amount
       helioResponse.id,
       `Purchase ${nwtAmount} NWT for $${amount} via Helio`
     );
@@ -191,8 +191,10 @@ export const handlePayment = async (req: any, res: any) => {
     }
 
     const { transactionSignature, status, statusToken } = data;
-    
-    const transaction = await sdk.transaction.getTransaction(transactionSignature);
+
+    const transaction = await sdk.transaction.getTransaction(
+      transactionSignature
+    );
 
     console.log("Processing webhook:", {
       status,
@@ -221,19 +223,24 @@ export const handlePayment = async (req: any, res: any) => {
         transaction.meta.transactionDataHash,
         {
           blockchainSymbol: transaction.paymentRequestCurrencySymbol,
-                    senderPK,
-                    statusToken,
-                    webhookData: req.body
+          senderPK,
+          statusToken,
+          webhookData: req.body,
         }
       );
+      console.log("Transaction update result:", updateResult);
 
       if (updateResult.success && updateResult.transaction) {
         // Update user wallet balance
         const balanceResult = await updateUserWalletBalance(
-                    updateResult.transaction.userId,
-                    parseFloat((Number(updateResult.transaction.usdAmount)* 100).toFixed(0)),
-                    'add'
-                );
+          updateResult.transaction.userId,
+          parseFloat(
+            (Number(updateResult.transaction.usdAmount) * 100).toFixed(0)
+          ),
+          "add"
+        );
+        console.log("Balance update result:", balanceResult);
+
         console.log("Transaction completed:", {
           transactionId: updateResult.transaction.id,
           balanceUpdated: balanceResult.success,
@@ -249,10 +256,10 @@ export const handlePayment = async (req: any, res: any) => {
         "failed",
         transaction.meta.transactionDataHash,
         {
-         blockchainSymbol: transaction.paymentRequestCurrencySymbol,
-                    senderPK,
-                    statusToken,
-                    webhookData: req.body
+          blockchainSymbol: transaction.paymentRequestCurrencySymbol,
+          senderPK,
+          statusToken,
+          webhookData: req.body,
         },
         `Payment failed with status: ${status}`
       );
