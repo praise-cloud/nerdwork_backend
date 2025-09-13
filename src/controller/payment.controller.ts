@@ -56,7 +56,6 @@ export const createPaymentLink = async (req: any, res: any) => {
     //     currencies
     // });
 
-    console.log(HELIO_PCURRENCY, HELIO_WALLET_ID);
     // Prepare DTO for Helio
     const createPaylinkDto: CreatePaylinkWithApiDto = {
       name: "NWT_PURCHASE", // Unique name for each payment link
@@ -77,13 +76,13 @@ export const createPaymentLink = async (req: any, res: any) => {
     const helioResponse = await sdk.paylink.create(createPaylinkDto);
 
     // Calculate NWT amount (assuming 1 USD = 90.49 NWT based on your frontend calculation)
-    const nwtAmount = amount * 90.49; // This should match your frontend calculation
+    const nwtAmount = amount * 100; // This should match your frontend calculation
 
     // Create user purchase transaction record
     const transactionResult = await createUserPurchaseTransaction(
       userId,
       nwtAmount,
-      amount, // USD amount
+      amount/ 100, // USD amount
       helioResponse.id,
       `Purchase ${nwtAmount} NWT for $${amount} via Helio`
     );
@@ -97,7 +96,7 @@ export const createPaymentLink = async (req: any, res: any) => {
     }
 
     console.log("Helio payment created:", helioResponse.id);
-    console.log("Transaction record created:", transactionResult.success);
+    console.log("Transaction record created:", transactionResult);
 
     res.json({
       success: true,
@@ -192,6 +191,8 @@ export const handlePayment = async (req: any, res: any) => {
     }
 
     const { transactionSignature, status, statusToken } = data;
+    
+    const transaction = await sdk.transaction.getTransaction(transactionSignature);
 
     console.log("Processing webhook:", {
       status,
@@ -215,25 +216,24 @@ export const handlePayment = async (req: any, res: any) => {
 
       // Example: If you store the transaction signature in metadata
       const updateResult = await updateUserTransactionStatus(
-        transactionSignature, // Using tx signature as lookup - you may need to adjust this
+        (transaction as any).paylink.id, // Using tx signature as lookup - you may need to adjust this
         "completed",
-        transactionSignature,
+        transaction.meta.transactionDataHash,
         {
-          blockchainSymbol,
-          senderPK,
-          statusToken,
-          webhookData: req.body,
+          blockchainSymbol: transaction.paymentRequestCurrencySymbol,
+                    senderPK,
+                    statusToken,
+                    webhookData: req.body
         }
       );
 
       if (updateResult.success && updateResult.transaction) {
         // Update user wallet balance
         const balanceResult = await updateUserWalletBalance(
-          updateResult.transaction.userId,
-          parseFloat(updateResult.transaction.nwtAmount),
-          "add"
-        );
-
+                    updateResult.transaction.userId,
+                    parseFloat((Number(updateResult.transaction.usdAmount)* 100).toFixed(0)),
+                    'add'
+                );
         console.log("Transaction completed:", {
           transactionId: updateResult.transaction.id,
           balanceUpdated: balanceResult.success,
@@ -245,14 +245,14 @@ export const handlePayment = async (req: any, res: any) => {
       console.log("Payment failed or pending:", status);
 
       await updateUserTransactionStatus(
-        transactionSignature,
+        (transaction as any).paylink.id,
         "failed",
-        transactionSignature,
+        transaction.meta.transactionDataHash,
         {
-          blockchainSymbol,
-          senderPK,
-          statusToken,
-          webhookData: req.body,
+         blockchainSymbol: transaction.paymentRequestCurrencySymbol,
+                    senderPK,
+                    statusToken,
+                    webhookData: req.body
         },
         `Payment failed with status: ${status}`
       );

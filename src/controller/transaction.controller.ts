@@ -24,10 +24,21 @@ export const createUserPurchaseTransaction = async (
   description?: string
 ) => {
   try {
+    // First get the reader profile ID from user ID
+    const [reader] = await db
+      .select()
+      .from(readerProfile)
+      .where(eq(readerProfile.userId, userId));
+
+    if (!reader) {
+      throw new Error("Reader profile not found");
+      
+    }
+
     const [transaction] = await db
       .insert(userTransactions)
       .values({
-        userId,
+        userId: reader.id, // Use reader.id, not userId
         transactionType: "purchase",
         status: "pending",
         nwtAmount: nwtAmount.toString(),
@@ -37,6 +48,7 @@ export const createUserPurchaseTransaction = async (
         helioPaymentId,
       })
       .returning();
+    console.log("Created user purchase transaction:", transaction);
 
     return { success: true, transaction };
   } catch (error) {
@@ -70,7 +82,7 @@ export const updateUserTransactionStatus = async (
       .set(updateData)
       .where(eq(userTransactions.helioPaymentId, helioPaymentId))
       .returning();
-
+    console.log("Updated user transaction:", updatedTransaction);
     return { success: true, transaction: updatedTransaction };
   } catch (error) {
     console.error("Error updating user transaction status:", error);
