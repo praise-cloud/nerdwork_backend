@@ -1,5 +1,6 @@
 import { Router } from "express";
 import {
+  addChapterView,
   buyChapter,
   createChapter,
   createDraft,
@@ -10,6 +11,7 @@ import {
   fetchChaptersByComicSlugForCreators,
   fetchChaptersByComicSlugForReaders,
   publishDraft,
+  toggleChapterLike,
 } from "../controller/chapter.controller";
 
 const router = Router();
@@ -321,5 +323,101 @@ router.post("/purchase", buyChapter);
  *         description: Internal server error
  */
 router.get("/paid", fetchAllPaidChapters);
+
+/**
+ * @swagger
+ * /chapters/view:
+ *   post:
+ *     summary: Record a chapter view
+ *     description: Records a view for the given chapter by the authenticated reader. If already viewed, it will not add a duplicate entry.
+ *     tags: [Chapters]
+ *     security:
+ *       - bearerAuth: []
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required:
+ *               - chapterId
+ *             properties:
+ *               chapterId:
+ *                 type: string
+ *                 example: "chap_abc123"
+ *     responses:
+ *       201:
+ *         description: View recorded successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                   example: "View recorded"
+ *       200:
+ *         description: Chapter already viewed by this reader
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Reader not found
+ *       500:
+ *         description: Internal server error
+ */
+router.post("/view", addChapterView);
+
+/**
+ * @swagger
+ * /chapters/{chapterId}/like:
+ *   post:
+ *     summary: Like or unlike a chapter
+ *     description: Toggles a like for the given chapter. If already liked, it will be unliked; otherwise, it will be liked.
+ *     tags: [Chapters]
+ *     security:
+ *       - bearerAuth: []
+ *     parameters:
+ *       - in: path
+ *         name: chapterId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: The unique identifier of the chapter
+ *         example: "chap_abc123"
+ *     responses:
+ *       200:
+ *         description: Like status updated
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 success:
+ *                   type: boolean
+ *                 message:
+ *                   type: string
+ *                   example: "Chapter liked"
+ *                 data:
+ *                   type: object
+ *                   properties:
+ *                     chapterId:
+ *                       type: string
+ *                       example: "chap_abc123"
+ *                     liked:
+ *                       type: boolean
+ *                       example: true
+ *                     likesCount:
+ *                       type: number
+ *                       example: 42
+ *       401:
+ *         description: Unauthorized
+ *       404:
+ *         description: Reader or Chapter not found
+ *       500:
+ *         description: Internal server error
+ */
+router.post("/:chapterId/like", toggleChapterLike);
 
 export default router;
