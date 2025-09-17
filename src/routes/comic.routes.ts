@@ -224,8 +224,8 @@ router.post("/subscribe/:comicId", subscribeForcomic);
  * @swagger
  * /comics/subscribe/{comicId}:
  *   post:
- *     summary: Subscribe or unsubscribe for a comic
- *     description: Toggles a Subscribe for the given comic. If already subscribed, it will be unsubscribed; otherwise, it will be subscribed.
+ *     summary: Subscribe or unsubscribe to a comic
+ *     description: Toggles subscription for the given comic. If already subscribed, the user will be unsubscribed; otherwise, they will be subscribed.
  *     tags: [Comics]
  *     security:
  *       - bearerAuth: []
@@ -236,10 +236,10 @@ router.post("/subscribe/:comicId", subscribeForcomic);
  *         schema:
  *           type: string
  *         description: The unique identifier of the comic
- *         example: "chap_abc123"
+ *         example: "comic_abc123"
  *     responses:
  *       200:
- *         description: Subscribe status updated
+ *         description: Subscription status updated
  *         content:
  *           application/json:
  *             schema:
@@ -247,25 +247,26 @@ router.post("/subscribe/:comicId", subscribeForcomic);
  *               properties:
  *                 success:
  *                   type: boolean
+ *                   example: true
  *                 message:
  *                   type: string
- *                   example: "Comic Subscribed" or "Comic Unsubscribed"
+ *                   example: "Comic subscribed"
  *                 data:
  *                   type: object
  *                   properties:
- *                     ComicId:
+ *                     comicId:
  *                       type: string
- *                       example: "chap_abc123"
- *                     liked:
+ *                       example: "comic_abc123"
+ *                     subscribed:
  *                       type: boolean
  *                       example: true
- *                     likesCount:
+ *                     subscribersCount:
  *                       type: number
- *                       example: 42
+ *                       example: 120
  *       401:
- *         description: Unauthorized
+ *         description: Unauthorized - Invalid or missing token
  *       404:
- *         description: Reader or Comic not found
+ *         description: Comic or Reader not found
  *       500:
  *         description: Internal server error
  */
