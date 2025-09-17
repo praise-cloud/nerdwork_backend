@@ -132,28 +132,30 @@ export const fetchAllComicByJwt = async (req, res) => {
       .where(eq(comics.creatorId, creator.id));
 
     const data = await Promise.all(
-      userComics.map(async (comic) => ({
-        id: comic.id,
-        title: comic.title,
-        language: comic.language,
-        ageRating: comic.ageRating,
-        noOfChapters: comic.noOfChapters,
-        noOfDrafts: comic.noOfDrafts,
-        description: comic.description,
-        image: generateFileUrl(comic.image),
-        comicStatus: comic.comicStatus,
-        genre: comic.genre,
-        tags: comic.tags,
-        slug: comic.slug,
-        creatorName: creator.creatorName,
-        createdAt: comic.createdAt,
-        updatedAt: comic.updatedAt,
-        viewsCount: await getComicViews(comic.id),
-        likesCount: await getComicLikes(comic.id),
-        subscribeCount: await getComicSubscribers(comic.id),
-      }))
+      userComics.map(async (comic) => {
+        const { subscribeCount } = await getComicSubscribers(comic.id);
+        return {
+          id: comic.id,
+          title: comic.title,
+          language: comic.language,
+          ageRating: comic.ageRating,
+          noOfChapters: comic.noOfChapters,
+          noOfDrafts: comic.noOfDrafts,
+          description: comic.description,
+          image: generateFileUrl(comic.image),
+          comicStatus: comic.comicStatus,
+          genre: comic.genre,
+          tags: comic.tags,
+          slug: comic.slug,
+          creatorName: creator.creatorName,
+          createdAt: comic.createdAt,
+          updatedAt: comic.updatedAt,
+          viewsCount: await getComicViews(comic.id),
+          likesCount: await getComicLikes(comic.id),
+          subscribeCount,
+        };
+      })
     );
-
     return res.json({ comics: data });
   } catch (err) {
     console.error(err);
@@ -169,6 +171,7 @@ export const fetchComicBySlug = async (req, res) => {
 
     if (!comic) return res.status(404).json({ message: "Comic not found" });
 
+    const { subscribeCount } = await getComicSubscribers(comic.id);
     const data = {
       id: comic.id,
       title: comic.title,
@@ -186,7 +189,7 @@ export const fetchComicBySlug = async (req, res) => {
       updatedAt: comic.updatedAt,
       viewsCount: await getComicViews(comic.id),
       likesCount: await getComicLikes(comic.id),
-      subscribeCount: await getComicSubscribers(comic.id),
+      subscribeCount,
     };
 
     return res.json({ data });
@@ -223,6 +226,11 @@ export const fetchComicBySlugForReaders = async (req, res) => {
 
     const inLibrary = !!libraries;
 
+    const { subscribeCount, hasSubscribed } = await getComicSubscribers(
+      comic.id,
+      reader.id
+    );
+
     const data = {
       id: comic.id,
       title: comic.title,
@@ -242,8 +250,8 @@ export const fetchComicBySlugForReaders = async (req, res) => {
       inLibrary,
       viewsCount: await getComicViews(comic.id),
       likesCount: await getComicLikes(comic.id),
-      subscribeCount: await getComicSubscribers(comic.id),
-      isSubscribed: await getComicSubscribers(comic.id, reader.id),
+      subscribeCount,
+      hasSubscribed,
     };
 
     return res.json({
@@ -280,14 +288,19 @@ export const fetchAllComics = async (req, res) => {
           .from(creatorProfile)
           .where(eq(creatorProfile.id, chapter.creatorId));
 
+        const { subscribeCount, hasSubscribed } = await getComicSubscribers(
+          chapter.id,
+          reader.id
+        );
+
         return {
           ...chapter,
           image: generateFileUrl(chapter.image),
           creatorName: creator?.creatorName || "Unknown",
           viewsCount: await getComicViews(chapter.id),
           likesCount: await getComicLikes(chapter.id),
-          subscribeCount: await getComicSubscribers(chapter.id),
-          isSubscribed: await getComicSubscribers(chapter.id, reader.id),
+          subscribeCount,
+          hasSubscribed,
         };
       })
     );
