@@ -65,7 +65,6 @@ export const chapterLikes = pgTable("chapter_likes", {
 
   readerId: uuid("reader_id")
     .notNull()
-    .unique()
     .references(() => readerProfile.id, { onDelete: "cascade" }),
 
   chapterId: uuid("chapter_id")
