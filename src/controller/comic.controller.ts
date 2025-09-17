@@ -1,8 +1,7 @@
-import { eq, sql } from "drizzle-orm";
+import { and, eq, sql } from "drizzle-orm";
 import { db } from "../config/db";
-import { comics } from "../model/comic";
-import jwt from "jsonwebtoken";
-import { creatorProfile } from "../model/profile";
+import { comics, comicSubscribers } from "../model/comic";
+import { creatorProfile, readerProfile } from "../model/profile";
 import { library } from "../model/library";
 import { generateFileUrl } from "./file.controller";
 import { chapterLikes, chapters, chapterViews } from "../model/chapter";
@@ -18,6 +17,34 @@ async function getComicViews(comicId: string) {
     .where(eq(chapters.comicId, comicId));
 
   return Number(totalViews) || 0;
+}
+
+export async function getComicSubscribers(comicId, readerId?) {
+  // Count likes
+  const [{ subscribeCount }] = await db
+    .select({ subscribeCount: sql`COUNT(${comicSubscribers.id})` })
+    .from(comicSubscribers)
+    .where(eq(comicSubscribers.comicId, comicId));
+
+  let hasSubscribed = false;
+  if (readerId) {
+    const [existingSubscriber] = await db
+      .select()
+      .from(comicSubscribers)
+      .where(
+        and(
+          eq(comicSubscribers.comicId, comicId),
+          eq(comicSubscribers.readerId, readerId)
+        )
+      );
+
+    hasSubscribed = !!existingSubscriber;
+  }
+
+  return {
+    subscribeCount: Number(subscribeCount) || 0,
+    hasSubscribed,
+  };
 }
 
 async function getComicLikes(comicId: string) {
@@ -123,6 +150,7 @@ export const fetchAllComicByJwt = async (req, res) => {
         updatedAt: comic.updatedAt,
         viewsCount: await getComicViews(comic.id),
         likesCount: await getComicLikes(comic.id),
+        subscribeCount: await getComicSubscribers(comic.id),
       }))
     );
 
@@ -158,6 +186,7 @@ export const fetchComicBySlug = async (req, res) => {
       updatedAt: comic.updatedAt,
       viewsCount: await getComicViews(comic.id),
       likesCount: await getComicLikes(comic.id),
+      subscribeCount: await getComicSubscribers(comic.id),
     };
 
     return res.json({ data });
@@ -170,6 +199,12 @@ export const fetchComicBySlug = async (req, res) => {
 export const fetchComicBySlugForReaders = async (req, res) => {
   try {
     const { slug } = req.params;
+    const userId = getUserJwtFromToken(req);
+
+    const [reader] = await db
+      .select()
+      .from(readerProfile)
+      .where(eq(readerProfile.userId, userId));
 
     const [comic] = await db.select().from(comics).where(eq(comics.slug, slug));
     if (!comic) return res.status(404).json({ message: "Comic not found" });
@@ -182,7 +217,9 @@ export const fetchComicBySlugForReaders = async (req, res) => {
     const [libraries] = await db
       .select()
       .from(library)
-      .where(eq(library.comicId, comic.id));
+      .where(
+        and(eq(library.comicId, comic.id), eq(library.readerId, reader.id))
+      );
 
     const inLibrary = !!libraries;
 
@@ -205,6 +242,8 @@ export const fetchComicBySlugForReaders = async (req, res) => {
       inLibrary,
       viewsCount: await getComicViews(comic.id),
       likesCount: await getComicLikes(comic.id),
+      subscribeCount: await getComicSubscribers(comic.id),
+      isSubscribed: await getComicSubscribers(comic.id, reader.id),
     };
 
     return res.json({
@@ -218,6 +257,17 @@ export const fetchComicBySlugForReaders = async (req, res) => {
 
 export const fetchAllComics = async (req, res) => {
   try {
+    const userId = getUserJwtFromToken(req);
+
+    const [reader] = await db
+      .select()
+      .from(readerProfile)
+      .where(eq(readerProfile.userId, userId));
+
+    if (!reader) {
+      return res.status(404).json({ message: "Reader not found" });
+    }
+
     const publishedComics = await db
       .select()
       .from(comics)
@@ -236,6 +286,8 @@ export const fetchAllComics = async (req, res) => {
           creatorName: creator?.creatorName || "Unknown",
           viewsCount: await getComicViews(chapter.id),
           likesCount: await getComicLikes(chapter.id),
+          subscribeCount: await getComicSubscribers(chapter.id),
+          isSubscribed: await getComicSubscribers(chapter.id, reader.id),
         };
       })
     );
@@ -261,6 +313,80 @@ export const deleteComicBySlug = async (req, res) => {
   } catch (err) {
     console.error(err);
     return res.status(400).json({ message: "Failed to fetch comic" });
+  }
+};
+
+export const subscribeForcomic = async (req, res) => {
+  try {
+    const userId = getUserJwtFromToken(req);
+    const { comicId } = req.params;
+
+    const [reader] = await db
+      .select()
+      .from(readerProfile)
+      .where(eq(readerProfile.userId, userId));
+    if (!reader) {
+      return res
+        .status(404)
+        .json({ success: false, message: "Reader not found" });
+    }
+
+    // check if already liked
+    const [existingSubscriber] = await db
+      .select()
+      .from(comicSubscribers)
+      .where(
+        and(
+          eq(comicSubscribers.comicId, comicId),
+          eq(comicSubscribers.readerId, reader.id)
+        )
+      );
+
+    if (existingSubscriber) {
+      // Unlike (delete row)
+      await db
+        .delete(comicSubscribers)
+        .where(eq(comicSubscribers.id, existingSubscriber.id));
+
+      const [{ subscribeCount }] = await db
+        .select({ subscribeCount: sql`COUNT(${comicSubscribers.id})` })
+        .from(comicSubscribers)
+        .where(eq(comicSubscribers.comicId, comicId));
+
+      return res.status(200).json({
+        success: true,
+        message: "Comic Unsubscribed",
+        data: {
+          comicId: comicId,
+          liked: false,
+          subscribeCount: Number(subscribeCount) || 0,
+        },
+      });
+    } else {
+      // Like (insert row)
+      await db.insert(comicSubscribers).values({
+        comicId: comicId,
+        readerId: reader.id,
+      });
+
+      const [{ subscribeCount }] = await db
+        .select({ subscribeCount: sql`COUNT(${comicSubscribers.id})` })
+        .from(comicSubscribers)
+        .where(eq(comicSubscribers.comicId, comicId));
+
+      return res.status(200).json({
+        success: true,
+        message: "Comic Subscribed",
+        data: {
+          comicId,
+          Subscribed: true,
+          subscribeCount: Number(subscribeCount) || 0,
+        },
+      });
+    }
+  } catch (err: any) {
+    console.error("Toggle Subscription Error:", err);
+    return res.status(500).json({ success: false, message: err.message });
   }
 };
 
