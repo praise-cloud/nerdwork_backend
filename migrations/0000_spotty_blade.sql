@@ -193,8 +193,7 @@ CREATE TABLE "chapter_views" (
 	"id" uuid PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
 	"reader_id" uuid NOT NULL,
 	"chapter_id" uuid NOT NULL,
-	"viewed_at" timestamp DEFAULT now() NOT NULL,
-	CONSTRAINT "chapter_views_reader_id_unique" UNIQUE("reader_id")
+	"viewed_at" timestamp DEFAULT now() NOT NULL
 );
 --> statement-breakpoint
 CREATE TABLE "chapters" (

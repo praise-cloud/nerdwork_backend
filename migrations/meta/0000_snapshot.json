@@ -1,5 +1,5 @@
 {
-  "id": "b8f3a2bc-7ea4-4521-b339-3071c5f04f73",
+  "id": "24f30218-5255-4680-87aa-97edc12ec776",
   "prevId": "00000000-0000-0000-0000-000000000000",
   "version": "7",
   "dialect": "postgresql",
@@ -1343,15 +1343,7 @@
         }
       },
       "compositePrimaryKeys": {},
-      "uniqueConstraints": {
-        "chapter_views_reader_id_unique": {
-          "name": "chapter_views_reader_id_unique",
-          "nullsNotDistinct": false,
-          "columns": [
-            "reader_id"
-          ]
-        }
-      },
+      "uniqueConstraints": {},
       "policies": {},
       "checkConstraints": {},
       "isRLSEnabled": false
