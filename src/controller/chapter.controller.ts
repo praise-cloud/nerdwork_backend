@@ -313,7 +313,13 @@ export const fetchChaptersByComicSlugForCreators = async (req, res) => {
 
 export const fetchChapterByUniqueCode = async (req, res) => {
   try {
+    const userId = getUserJwtFromToken(req);
     const { code } = req.params;
+
+    const [reader] = await db
+      .select()
+      .from(readerProfile)
+      .where(eq(readerProfile.userId, userId));
 
     const [chapter] = await db
       .select()
@@ -325,6 +331,13 @@ export const fetchChapterByUniqueCode = async (req, res) => {
         .status(404)
         .json({ success: false, message: "Chapter not found" });
     }
+
+    const [paid] = await db
+      .select({ chapterId: paidChapters.chapterId })
+      .from(paidChapters)
+      .where(eq(paidChapters.readerId, reader.id));
+
+    const hasPaid = !!paid;
 
     const { likesCount } = await getChapterLikes(chapter.id);
     const { viewsCount } = await getChapterViews(chapter.id);
@@ -343,6 +356,7 @@ export const fetchChapterByUniqueCode = async (req, res) => {
       updatedAt: chapter.updatedAt,
       likesCount,
       viewsCount,
+      hasPaid,
     };
 
     return res.status(200).json({

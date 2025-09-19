@@ -1,4 +1,4 @@
-import { eq } from "drizzle-orm";
+import { desc, eq } from "drizzle-orm";
 import { db } from "../config/db";
 import {
   creatorProfile,
@@ -29,6 +29,7 @@ import {
   updateUserWalletBalance,
 } from "./transaction.controller";
 import { userTransactions } from "../model/userTransaction";
+import { getUserJwtFromToken } from "./library.controller";
 
 export const createPaymentLink = async (req: any, res: any) => {
   const authHeader = req.headers.authorization;
@@ -272,15 +273,7 @@ export const handlePayment = async (req: any, res: any) => {
 
 export const fetchTransactionByJwtForReaders = async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    const token = authHeader.split(" ")[1];
-    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
-
-    const userId = decoded.userId;
+    const userId = getUserJwtFromToken(req);
 
     const [reader] = await db
       .select()
@@ -293,7 +286,8 @@ export const fetchTransactionByJwtForReaders = async (req, res) => {
     const userTransaction = await db
       .select()
       .from(userTransactions)
-      .where(eq(userTransactions.userId, reader.id));
+      .where(eq(userTransactions.userId, reader.id))
+      .orderBy(desc(creatorTransactions.createdAt));
 
     return res.json({ transaction: userTransaction });
   } catch (err) {
@@ -304,15 +298,7 @@ export const fetchTransactionByJwtForReaders = async (req, res) => {
 
 export const fetchTransactionByJwtForCreators = async (req, res) => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader || !authHeader.startsWith("Bearer ")) {
-      return res.status(401).json({ message: "Unauthorized" });
-    }
-
-    const token = authHeader.split(" ")[1];
-    const decoded: any = jwt.verify(token, process.env.JWT_SECRET!);
-
-    const userId = decoded.userId;
+    const userId = getUserJwtFromToken(req);
 
     const [creator] = await db
       .select()
@@ -325,7 +311,8 @@ export const fetchTransactionByJwtForCreators = async (req, res) => {
     const creatorTransaction = await db
       .select()
       .from(creatorTransactions)
-      .where(eq(creatorTransactions.creatorId, creator.id));
+      .where(eq(creatorTransactions.creatorId, creator.id))
+      .orderBy(desc(creatorTransactions.createdAt));
 
     return res.json({ transaction: creatorTransaction });
   } catch (err) {
