@@ -287,7 +287,7 @@ export const fetchTransactionByJwtForReaders = async (req, res) => {
       .select()
       .from(userTransactions)
       .where(eq(userTransactions.userId, reader.id))
-      .orderBy(desc(creatorTransactions.createdAt));
+      .orderBy(desc(userTransactions.createdAt));
 
     return res.json({ transaction: userTransaction });
   } catch (err) {

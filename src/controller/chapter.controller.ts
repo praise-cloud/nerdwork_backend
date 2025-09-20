@@ -376,7 +376,13 @@ export const publishDraft = async (req, res) => {
     const [chapter] = await db
       .select()
       .from(chapters)
-      .where(eq(chapters.uniqueCode, draftUniqCode));
+      .where(
+        and(
+          eq(chapters.uniqueCode, draftUniqCode),
+          eq(chapters.comicId, comicId),
+          eq(chapters.chapterStatus, "draft")
+        )
+      );
 
     if (!chapter) {
       return res
@@ -396,13 +402,14 @@ export const publishDraft = async (req, res) => {
 
     const nextSerial = (lastChapter?.maxSerial || 0) + 1;
 
-    await db
+    const [updatedChapter] = await db
       .update(chapters)
       .set({
         chapterStatus: "published",
         serialNo: nextSerial,
       })
-      .where(eq(chapters.id, chapter.id));
+      .where(eq(chapters.id, chapter.id))
+      .returning();
 
     await db
       .update(comics)
@@ -416,6 +423,7 @@ export const publishDraft = async (req, res) => {
     return res.status(200).json({
       success: true,
       message: "Draft published successfully",
+      data: updatedChapter,
     });
   } catch (err: any) {
     console.error("Publish Draft Error:", err);
