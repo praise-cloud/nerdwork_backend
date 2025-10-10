@@ -1,0 +1,20 @@
+{
+  "name": "nerdwork-auth-lambda",
+  "version": "1.0.0",
+  "description": "Nerdwork Auth Lambda Function",
+  "main": "dist/handler.js",
+  "scripts": {
+    "build": "tsc",
+    "deploy": "serverless deploy"
+  },
+  "dependencies": {
+    "express": "^5.1.0",
+    "serverless-http": "^3.2.0"
+  },
+  "devDependencies": {
+    "@types/express": "^4.17.21",
+    "@types/node": "^20.10.0",
+    "serverless-offline": "^13.3.0",
+    "typescript": "^5.3.0"
+  }
+}
