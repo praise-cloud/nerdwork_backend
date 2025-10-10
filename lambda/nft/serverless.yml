@@ -32,8 +32,6 @@ functions:
 
 plugins:
   - serverless-offline
-  - serverless-plugin-typescript
 
-custom:
-  serverlessPluginTypescript:
-    tsConfigFileLocation: './tsconfig.json'
+
+

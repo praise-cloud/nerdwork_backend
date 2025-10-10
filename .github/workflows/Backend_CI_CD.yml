@@ -116,7 +116,13 @@ jobs:
           
           # Install dependencies
           echo "\n=== Installing dependencies ==="
-          npm ci || npm install
+          if [ -f "package-lock.json" ]; then
+            echo "Found package-lock.json, using npm ci"
+            npm ci --legacy-peer-deps
+          else
+            echo "No package-lock.json found, using npm install"
+            npm install --legacy-peer-deps
+          fi
           
           # Build the service  
           echo "\n=== Building service ==="
