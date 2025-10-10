@@ -104,7 +104,7 @@ jobs:
           echo "Current directory: $(pwd)"
           echo "Files in service directory:"
           ls -la
-          
+
           # Copy the pre-built dist files (compiled JavaScript)
           echo "\n=== Copying pre-built artifacts ==="
           mkdir -p dist
@@ -113,21 +113,27 @@ jobs:
             echo "Available dist contents:"
             find ../../dist-main -maxdepth 2 -type f | head -10
           }
-          
+
           # Install dependencies
           echo "\n=== Installing dependencies ==="
           if [ -f "package-lock.json" ]; then
             echo "Found package-lock.json, using npm ci"
+            rm -rf node_modules
             npm ci --legacy-peer-deps
           else
             echo "No package-lock.json found, using npm install"
             npm install --legacy-peer-deps
           fi
-          
+
+          # Ensure TypeScript is available locally so we can compile the handler
+          # Installing with --no-save avoids modifying package.json
+          echo "\n=== Installing TypeScript locally for handler compilation ==="
+          npm install --no-save typescript --no-audit --no-fund || echo "Warning: failed to install typescript locally"
+
           # Compile only the handler (which imports from dist)
           echo "\n=== Compiling handler ==="
           npx tsc handler.ts --outDir dist --module commonjs --target es2020 --esModuleInterop --skipLibCheck --allowSyntheticDefaultImports
-          
+
           # Verify build output
           echo "\n=== Verifying build output ==="
           [ -f "dist/handler.js" ] && echo "✅ Handler compiled successfully" || echo "❌ Handler compilation failed"
