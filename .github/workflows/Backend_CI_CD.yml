@@ -2,15 +2,15 @@ name: Backend CI/CD Pipeline
 
 on:
   push:
-    branches: [main, master, develop]
+    branches: [master]
   pull_request:
-    branches: [main, master, develop]
+    branches: [master]
 
 jobs:
   backend-ci:
     name: Backend CI
     runs-on: ubuntu-latest
-    environment: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' && 'production' || 'development' }}
+    environment: ${{ github.ref == 'refs/heads/master' && 'production' || 'development' }}
 
     services:
       postgres:
@@ -59,9 +59,9 @@ jobs:
   deploy-lambda-functions:
     name: Deploy Lambda Functions
     needs: [backend-ci]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop')
+    if: github.event_name == 'push' && (github.ref == 'refs/heads/master')
     runs-on: ubuntu-latest
-    environment: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' && 'production' || 'development' }}
+    environment: ${{ github.ref == 'refs/heads/master' && 'production' || 'development' }}
 
     strategy:
       matrix:
