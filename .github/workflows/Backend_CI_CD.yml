@@ -102,22 +102,19 @@ jobs:
           mkdir -p ./lambda-packages/${{ matrix.service }}
           cp -r ./dist/* ./lambda-packages/${{ matrix.service }}/
           cp package.json ./lambda-packages/${{ matrix.service }}/
-          cp package-lock.json ./lambda-packages/${{ matrix.service }}/  # Add this line: Copy root lockfile
+          cp package-lock.json ./lambda-packages/${{ matrix.service }}/
           cd ./lambda-packages/${{ matrix.service }}
-          npm ci --production --frozen-lockfile
+          npm ci --production --frozen-lockfile || npm install --frozen-lockfile --production
 
       - name: Copy and compile handler.ts for service
         run: |
-          # Copy your handler.ts and related files to the service package
           mkdir -p ./lambda-packages/${{ matrix.service }}/src
           cp lambda/${{ matrix.service }}/handler.ts ./lambda-packages/${{ matrix.service }}/src/handler.ts
           cp lambda/${{ matrix.service }}/routes/auth.routes.ts ./lambda-packages/${{ matrix.service }}/src/routes/auth.routes.ts  # Adjust for service-specific routes
           cp lambda/${{ matrix.service }}/server.ts ./lambda-packages/${{ matrix.service }}/src/server.ts  # Adjust if needed
 
           cd ./lambda-packages/${{ matrix.service }}
-          # Compile TS to JS (assumes tsconfig.json in root; copy if needed)
           npx tsc src/handler.ts --outDir dist --target es2020 --module commonjs --esModuleInterop
-          # Rename compiled handler
           mv dist/handler.js handler.js
 
       - name: Create serverless.yml
