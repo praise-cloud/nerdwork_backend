@@ -1,9 +1,22 @@
 import serverless from 'serverless-http';
 import express from 'express';
-import transactionRoutes from '../../src/routes/transaction.routes';
+import cors from 'cors';
+import helmet from 'helmet';
 
-// Apply transaction routes to a new Express app for this Lambda function
+// Import from compiled JavaScript
+const transactionRoutes = require('./routes/transaction.routes');
+
+// Create Express app with essential middleware for Lambda
 const transactionApp = express();
-transactionApp.use('/', transactionRoutes);
+
+// Add essential middleware
+transactionApp.use(express.json());
+transactionApp.use(express.urlencoded({ extended: true }));
+transactionApp.use(cors());
+transactionApp.use(helmet());
+
+// Apply routes
+transactionApp.use('/', transactionRoutes.default || transactionRoutes);
 
 export const handler = serverless(transactionApp);
+

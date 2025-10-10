@@ -1,9 +1,21 @@
 import serverless from 'serverless-http';
 import express from 'express';
-import helioWebhooksRoutes from '../../src/routes/helio.webhooks.routes';
+import cors from 'cors';
+import helmet from 'helmet';
 
-// Apply helio webhooks routes to a new Express app for this Lambda function
+// Import from compiled JavaScript
+const helioWebhooksRoutes = require('./routes/helio.webhooks.routes');
+
+// Create Express app with essential middleware for Lambda
 const helioWebhooksApp = express();
-helioWebhooksApp.use('/', helioWebhooksRoutes);
+
+// Add essential middleware
+helioWebhooksApp.use(express.json());
+helioWebhooksApp.use(express.urlencoded({ extended: true }));
+helioWebhooksApp.use(cors());
+helioWebhooksApp.use(helmet());
+
+// Apply routes
+helioWebhooksApp.use('/', helioWebhooksRoutes.default || helioWebhooksRoutes);
 
 export const handler = serverless(helioWebhooksApp);

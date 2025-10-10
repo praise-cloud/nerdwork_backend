@@ -91,6 +91,12 @@ jobs:
       - name: Install Serverless Framework
         run: npm install -g serverless
 
+      - name: Download build artifacts
+        uses: actions/download-artifact@v4
+        with:
+          name: backend-build
+          path: ./dist-main
+
       - name: Setup and build service
         working-directory: lambda/${{ matrix.service }}
         run: |
@@ -99,20 +105,14 @@ jobs:
           echo "Files in service directory:"
           ls -la
           
-          # Create source directory and copy files
-          echo "\n=== Copying source code ==="
-          mkdir -p src
-          cp -r ../../src/* ./src/ 2>/dev/null || {
-            echo "Warning: Some source files may not have been copied"
-            echo "Available source directories:"
-            find ../../src -maxdepth 2 -type d | head -10
+          # Copy the pre-built dist files (compiled JavaScript)
+          echo "\n=== Copying pre-built artifacts ==="
+          mkdir -p dist
+          cp -r ../../dist-main/* ./dist/ 2>/dev/null || {
+            echo "Warning: Some dist files may not have been copied"
+            echo "Available dist contents:"
+            find ../../dist-main -maxdepth 2 -type f | head -10
           }
-          
-          # Verify critical directories exist
-          echo "\n=== Verifying source structure ==="
-          [ -d "./src/routes" ] && echo "✅ Routes directory found" || echo "❌ Routes directory missing"
-          [ -d "./src/controller" ] && echo "✅ Controller directory found" || echo "❌ Controller directory missing"
-          [ -d "./src/config" ] && echo "✅ Config directory found" || echo "❌ Config directory missing"
           
           # Install dependencies
           echo "\n=== Installing dependencies ==="
@@ -124,9 +124,15 @@ jobs:
             npm install --legacy-peer-deps
           fi
           
-          # Build the service  
-          echo "\n=== Building service ==="
-          npm run build
+          # Compile only the handler (which imports from dist)
+          echo "\n=== Compiling handler ==="
+          npx tsc handler.ts --outDir dist --module commonjs --target es2020 --esModuleInterop --skipLibCheck --allowSyntheticDefaultImports
+          
+          # Verify build output
+          echo "\n=== Verifying build output ==="
+          [ -f "dist/handler.js" ] && echo "✅ Handler compiled successfully" || echo "❌ Handler compilation failed"
+          echo "Contents of dist directory:"
+          ls -la dist/ | head -10
 
       - name: Deploy to AWS Lambda
         working-directory: lambda/${{ matrix.service }}

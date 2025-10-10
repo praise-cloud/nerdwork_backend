@@ -2,7 +2,9 @@ import serverless from 'serverless-http';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import paymentRoutes from '../../src/routes/payment.routes';
+
+// Import from compiled JavaScript
+const paymentRoutes = require('./routes/payment.routes');
 
 // Create Express app with essential middleware for Lambda
 const paymentApp = express();
@@ -14,6 +16,6 @@ paymentApp.use(cors());
 paymentApp.use(helmet());
 
 // Apply routes
-paymentApp.use('/', paymentRoutes);
+paymentApp.use('/', paymentRoutes.default || paymentRoutes);
 
 export const handler = serverless(paymentApp);

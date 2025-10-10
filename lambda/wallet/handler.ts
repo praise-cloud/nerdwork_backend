@@ -1,9 +1,22 @@
 import serverless from 'serverless-http';
 import express from 'express';
-import walletRoutes from '../../src/routes/wallet.routes';
+import cors from 'cors';
+import helmet from 'helmet';
 
-// Apply wallet routes to a new Express app for this Lambda function
+// Import from compiled JavaScript
+const walletRoutes = require('./routes/wallet.routes');
+
+// Create Express app with essential middleware for Lambda
 const walletApp = express();
-walletApp.use('/', walletRoutes);
+
+// Add essential middleware
+walletApp.use(express.json());
+walletApp.use(express.urlencoded({ extended: true }));
+walletApp.use(cors());
+walletApp.use(helmet());
+
+// Apply routes
+walletApp.use('/', walletRoutes.default || walletRoutes);
 
 export const handler = serverless(walletApp);
+

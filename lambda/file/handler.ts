@@ -1,9 +1,22 @@
 import serverless from 'serverless-http';
 import express from 'express';
-import fileRoutes from '../../src/routes/files.routes';
+import cors from 'cors';
+import helmet from 'helmet';
 
-// Apply file routes to a new Express app for this Lambda function
+// Import from compiled JavaScript
+const fileRoutes = require('./routes/files.routes');
+
+// Create Express app with essential middleware for Lambda
 const fileApp = express();
-fileApp.use('/', fileRoutes);
+
+// Add essential middleware
+fileApp.use(express.json());
+fileApp.use(express.urlencoded({ extended: true }));
+fileApp.use(cors());
+fileApp.use(helmet());
+
+// Apply routes
+fileApp.use('/', fileRoutes.default || fileRoutes);
 
 export const handler = serverless(fileApp);
+

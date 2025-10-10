@@ -1,9 +1,22 @@
 import serverless from 'serverless-http';
 import express from 'express';
-import libraryRoutes from '../../src/routes/library.routes';
+import cors from 'cors';
+import helmet from 'helmet';
 
-// Apply library routes to a new Express app for this Lambda function
+// Import from compiled JavaScript
+const libraryRoutes = require('./routes/library.routes');
+
+// Create Express app with essential middleware for Lambda
 const libraryApp = express();
-libraryApp.use('/', libraryRoutes);
+
+// Add essential middleware
+libraryApp.use(express.json());
+libraryApp.use(express.urlencoded({ extended: true }));
+libraryApp.use(cors());
+libraryApp.use(helmet());
+
+// Apply routes
+libraryApp.use('/', libraryRoutes.default || libraryRoutes);
 
 export const handler = serverless(libraryApp);
+

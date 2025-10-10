@@ -2,7 +2,9 @@ import serverless from 'serverless-http';
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';
-import comicRoutes from '../../src/routes/comic.routes';
+
+// Import from compiled JavaScript
+const comicRoutes = require('./routes/comic.routes');
 
 // Create Express app with essential middleware for Lambda
 const comicApp = express();
@@ -14,6 +16,6 @@ comicApp.use(cors());
 comicApp.use(helmet());
 
 // Apply routes
-comicApp.use('/', comicRoutes);
+comicApp.use('/', comicRoutes.default || comicRoutes);
 
 export const handler = serverless(comicApp);
