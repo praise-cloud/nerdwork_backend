@@ -1,7 +1,7 @@
-import serverless from 'serverless-http';
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
+const serverless = require('serverless-http');
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
 
 // Import from compiled JavaScript
 const transactionRoutes = require('./routes/transaction.routes');
@@ -18,5 +18,5 @@ transactionApp.use(helmet());
 // Apply routes
 transactionApp.use('/', transactionRoutes.default || transactionRoutes);
 
-export const handler = serverless(transactionApp);
+module.exports.handler = serverless(transactionApp);
 

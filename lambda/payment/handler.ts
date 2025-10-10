@@ -1,7 +1,7 @@
-import serverless from 'serverless-http';
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
+const serverless = require('serverless-http');
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
 
 // Import from compiled JavaScript
 const paymentRoutes = require('./routes/payment.routes');
@@ -18,4 +18,5 @@ paymentApp.use(helmet());
 // Apply routes
 paymentApp.use('/', paymentRoutes.default || paymentRoutes);
 
-export const handler = serverless(paymentApp);
+module.exports.handler = serverless(paymentApp);
+

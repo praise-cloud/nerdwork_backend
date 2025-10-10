@@ -1,7 +1,7 @@
-import serverless from 'serverless-http';
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
+const serverless = require('serverless-http');
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
 
 // Import from compiled JavaScript
 const libraryRoutes = require('./routes/library.routes');
@@ -18,5 +18,5 @@ libraryApp.use(helmet());
 // Apply routes
 libraryApp.use('/', libraryRoutes.default || libraryRoutes);
 
-export const handler = serverless(libraryApp);
+module.exports.handler = serverless(libraryApp);
 

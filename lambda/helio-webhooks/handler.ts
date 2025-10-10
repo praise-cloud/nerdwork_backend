@@ -1,7 +1,7 @@
-import serverless from 'serverless-http';
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
+const serverless = require('serverless-http');
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
 
 // Import from compiled JavaScript
 const helioWebhooksRoutes = require('./routes/helio.webhooks.routes');
@@ -18,4 +18,4 @@ helioWebhooksApp.use(helmet());
 // Apply routes
 helioWebhooksApp.use('/', helioWebhooksRoutes.default || helioWebhooksRoutes);
 
-export const handler = serverless(helioWebhooksApp);
+module.exports.handler = serverless(helioWebhooksApp);

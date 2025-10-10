@@ -1,7 +1,7 @@
-import serverless from 'serverless-http';
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
+const serverless = require('serverless-http');
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
 
 // Import from compiled JavaScript
 const chapterRoutes = require('./routes/chapter.routes');
@@ -18,5 +18,5 @@ chapterApp.use(helmet());
 // Apply routes
 chapterApp.use('/', chapterRoutes.default || chapterRoutes);
 
-export const handler = serverless(chapterApp);
+module.exports.handler = serverless(chapterApp);
 

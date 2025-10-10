@@ -1,7 +1,7 @@
-import serverless from 'serverless-http';
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
+const serverless = require('serverless-http');
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
 
 // Import from compiled JavaScript
 const comicRoutes = require('./routes/comic.routes');
@@ -18,4 +18,5 @@ comicApp.use(helmet());
 // Apply routes
 comicApp.use('/', comicRoutes.default || comicRoutes);
 
-export const handler = serverless(comicApp);
+module.exports.handler = serverless(comicApp);
+

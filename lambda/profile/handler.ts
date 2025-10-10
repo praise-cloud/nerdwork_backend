@@ -1,7 +1,7 @@
-import serverless from 'serverless-http';
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
+const serverless = require('serverless-http');
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
 
 // Import from compiled JavaScript
 const profileRoutes = require('./routes/profile.routes');
@@ -18,5 +18,5 @@ profileApp.use(helmet());
 // Apply routes
 profileApp.use('/', profileRoutes.default || profileRoutes);
 
-export const handler = serverless(profileApp);
+module.exports.handler = serverless(profileApp);
 

@@ -1,7 +1,7 @@
-import serverless from 'serverless-http';
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
+const serverless = require('serverless-http');
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
 
 // Import from compiled JavaScript
 const walletRoutes = require('./routes/wallet.routes');
@@ -18,5 +18,5 @@ walletApp.use(helmet());
 // Apply routes
 walletApp.use('/', walletRoutes.default || walletRoutes);
 
-export const handler = serverless(walletApp);
+module.exports.handler = serverless(walletApp);
 

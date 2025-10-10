@@ -1,7 +1,7 @@
-import serverless from 'serverless-http';
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
+const serverless = require('serverless-http');
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
 
 // Import from compiled JavaScript
 const fileRoutes = require('./routes/files.routes');
@@ -18,5 +18,6 @@ fileApp.use(helmet());
 // Apply routes
 fileApp.use('/', fileRoutes.default || fileRoutes);
 
-export const handler = serverless(fileApp);
+module.exports.handler = serverless(fileApp);
+
 

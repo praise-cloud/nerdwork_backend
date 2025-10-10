@@ -1,7 +1,7 @@
-import serverless from 'serverless-http';
-import express from 'express';
-import cors from 'cors';
-import helmet from 'helmet';
+const serverless = require('serverless-http');
+const express = require('express');
+const cors = require('cors');
+const helmet = require('helmet');
 
 // Import from compiled JavaScript
 const nftRoutes = require('./routes/nft.routes');
@@ -18,5 +18,5 @@ nftApp.use(helmet());
 // Apply routes
 nftApp.use('/', nftRoutes.default || nftRoutes);
 
-export const handler = serverless(nftApp);
+module.exports.handler = serverless(nftApp);
 
