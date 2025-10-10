@@ -91,24 +91,44 @@ jobs:
       - name: Install Serverless Framework
         run: npm install -g serverless
 
-      - name: Copy source code and install dependencies for service
+      - name: Setup and build service
+        working-directory: lambda/${{ matrix.service }}
         run: |
-          cd lambda/${{ matrix.service }}
+          echo "=== Setting up service: ${{ matrix.service }} ==="
+          echo "Current directory: $(pwd)"
+          echo "Files in service directory:"
+          ls -la
           
-          # Copy the entire src directory from the main project for compilation
-          cp -r ../../src .
+          # Create source directory and copy files
+          echo "\n=== Copying source code ==="
+          mkdir -p src
+          cp -r ../../src/* ./src/ 2>/dev/null || {
+            echo "Warning: Some source files may not have been copied"
+            echo "Available source directories:"
+            find ../../src -maxdepth 2 -type d | head -10
+          }
           
-          # Install dependencies for this specific service
-          npm install
+          # Verify critical directories exist
+          echo "\n=== Verifying source structure ==="
+          [ -d "./src/routes" ] && echo "✅ Routes directory found" || echo "❌ Routes directory missing"
+          [ -d "./src/controller" ] && echo "✅ Controller directory found" || echo "❌ Controller directory missing"
+          [ -d "./src/config" ] && echo "✅ Config directory found" || echo "❌ Config directory missing"
           
-          # Build the service
+          # Install dependencies
+          echo "\n=== Installing dependencies ==="
+          npm ci || npm install
+          
+          # Build the service  
+          echo "\n=== Building service ==="
           npm run build
 
       - name: Deploy to AWS Lambda
+        working-directory: lambda/${{ matrix.service }}
         run: |
-          cd lambda/${{ matrix.service }}
+          echo "=== Deploying service: ${{ matrix.service }} ==="
           STAGE="${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' && 'prod' || 'dev' }}"
-          serverless deploy --stage $STAGE
+          echo "Deploying to stage: $STAGE"
+          serverless deploy --stage $STAGE --verbose
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
@@ -120,9 +140,14 @@ jobs:
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           script: |
-            github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: 'Backend Deployment Failed - ${{ matrix.service }}',
-              body: 'Check logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
-            });
+            try {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `Backend Deployment Failed - ${{ matrix.service }}`,
+                body: `Deployment failed for service: ${{ matrix.service }}\n\nCheck logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\n\nWorkflow: ${context.workflow}\nRef: ${context.ref}`
+              });
+              console.log('Issue created successfully');
+            } catch (error) {
+              console.log('Failed to create issue:', error.message);
+            }
