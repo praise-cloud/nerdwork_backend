@@ -41,7 +41,7 @@ jobs:
       - name: Install dependencies
         run: |
           rm -rf node_modules
-          npm ci --frozen-lockfile
+          npm ci --frozen-lockfile || npm install --frozen-lockfile
 
       - name: Lint code
         run: npm run lint || echo "No linting configured"
