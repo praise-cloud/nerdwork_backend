@@ -4,11 +4,12 @@ provider:
   name: aws
   runtime: nodejs20.x
   stage: ${opt:stage, 'dev'}
-  region: ${opt:region, 'us-east-1'}
+  region: ${opt:region, 'us-west-2'}  # Cheapest for your test
   environment:
     NODE_ENV: ${opt:stage, 'dev'}
     DATABASE_URL: ${ssm:/nerdwork/${self:provider.stage}/database-url}
     JWT_SECRET: ${ssm:/nerdwork/${self:provider.stage}/jwt-secret}
+    AWS_REGION: ${self:provider.region}  # For services needing region
   iam:
     role:
       statements:

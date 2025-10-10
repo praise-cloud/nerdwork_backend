@@ -10,6 +10,7 @@ jobs:
   backend-ci:
     name: Backend CI
     runs-on: ubuntu-latest
+    environment: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' && 'production' || 'development' }}
 
     services:
       postgres:
@@ -38,7 +39,7 @@ jobs:
           cache-dependency-path: './package-lock.json'
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --frozen-lockfile
 
       - name: Lint code
         run: npm run lint || echo "No linting configured"
@@ -46,8 +47,8 @@ jobs:
       - name: Run tests
         run: npm test
         env:
-          DATABASE_URL: postgresql://postgres:FohTDLGJpGUxRFBKRVoYmVOYlAyhmZDL@turntable.proxy.rlwy.net:17037/railway
-          JWT_SECRET: cmusencwyenumieu8w7634378urnscudysuyiudimcjwugrftyuyzdiunch
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
           NODE_ENV: test
 
       - name: Build application
@@ -65,6 +66,7 @@ jobs:
     needs: [backend-ci]
     if: github.event_name == 'push' && (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master' || github.ref == 'refs/heads/develop')
     runs-on: ubuntu-latest
+    environment: ${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' && 'production' || 'development' }}
 
     strategy:
       matrix:
@@ -106,29 +108,21 @@ jobs:
           cp -r ./dist/* ./lambda-packages/${{ matrix.service }}/
           cp package.json ./lambda-packages/${{ matrix.service }}/
           cd ./lambda-packages/${{ matrix.service }}
-          npm ci --production
+          npm ci --production --frozen-lockfile
 
-      - name: Create service-specific handler
+      - name: Copy and compile handler.ts for service
         run: |
-          cat > ./lambda-packages/${{ matrix.service }}/handler.js << EOL
-          const serverless = require('serverless-http');
-          const { app } = require('./dist/server');
+          # Copy your handler.ts and related files to the service package
+          mkdir -p ./lambda-packages/${{ matrix.service }}/src
+          cp lambda/${{ matrix.service }}/handler.ts ./lambda-packages/${{ matrix.service }}/src/handler.ts
+          cp lambda/${{ matrix.service }}/routes/auth.routes.ts ./lambda-packages/${{ matrix.service }}/src/routes/auth.routes.ts  # Adjust for service-specific routes
+          cp lambda/${{ matrix.service }}/server.ts ./lambda-packages/${{ matrix.service }}/src/server.ts  # Adjust if needed
 
-          // Filter routes for this service only
-          const serviceRoutes = app._router.stack.filter(layer => {
-            if (layer.route) {
-              return layer.route.path.includes('/${{ matrix.service }}') ||
-                     layer.route.path.includes('/${{ matrix.service }}/');
-            }
-            return false;
-          });
-
-          // Create a new router with only this service's routes
-          const serviceApp = require('express')();
-          serviceApp._router.stack = serviceRoutes;
-
-          module.exports.handler = serverless(serviceApp);
-          EOL
+          cd ./lambda-packages/${{ matrix.service }}
+          # Compile TS to JS (assumes tsconfig.json in root; copy if needed)
+          npx tsc src/handler.ts --outDir dist --target es2020 --module commonjs --esModuleInterop
+          # Rename compiled handler
+          mv dist/handler.js handler.js
 
       - name: Create serverless.yml
         run: |
@@ -138,12 +132,21 @@ jobs:
           provider:
             name: aws
             runtime: nodejs20.x
-            stage: \${opt:stage, 'dev'}
-            region: \${opt:region, 'us-east-1'}
+            stage: \${opt:stage, '${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' && 'prod' || 'dev' }}'}
+            region: \${opt:region, '${{ secrets.AWS_REGION }}'}
             environment:
-              NODE_ENV: \${opt:stage, 'dev'}
-              DATABASE_URL: \${ssm:/nerdwork/\${self:provider.stage}/database-url}
-              JWT_SECRET: \${ssm:/nerdwork/\${self:provider.stage}/jwt-secret}
+              NODE_ENV: \${opt:stage, '${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' && 'prod' || 'dev' }}'}
+              DATABASE_URL: ${{ secrets.DATABASE_URL }}
+              JWT_SECRET: ${{ secrets.JWT_SECRET }}
+              AWS_REGION: \${self:provider.region}
+            iam:
+              role:
+                statements:
+                  - Effect: Allow
+                    Action:
+                      - ssm:GetParameter
+                    Resource:
+                      - arn:aws:ssm:\${self:provider.region}:*:parameter/nerdwork/\${self:provider.stage}/*
 
           functions:
             api:
@@ -158,13 +161,32 @@ jobs:
 
           plugins:
             - serverless-offline
+            - serverless-plugin-typescript
+
+          custom:
+            serverlessPluginTypescript:
+              tsConfigFileLocation: './tsconfig.json'
           EOL
 
       - name: Deploy to AWS Lambda
         run: |
           cd ./lambda-packages/${{ matrix.service }}
           STAGE="${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' && 'prod' || 'dev' }}"
-          serverless deploy --stage $STAGE
+          serverless deploy --stage $STAGE || exit 1
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+
+      - name: Notify failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: 'Backend Deployment Failed - ${{ matrix.service }}',
+              body: 'Check logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}'
+            });
