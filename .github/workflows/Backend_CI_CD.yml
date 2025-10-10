@@ -46,13 +46,6 @@ jobs:
       - name: Lint code
         run: npm run lint || echo "No linting configured"
 
-      - name: Run tests
-        # run: npm test
-        env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          NODE_ENV: test
-
       - name: Build application
         run: npm run build
 
