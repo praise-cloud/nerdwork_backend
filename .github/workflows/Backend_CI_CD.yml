@@ -123,7 +123,7 @@ jobs:
             npm ci --only=production --legacy-peer-deps --no-audit --no-fund
           else
             echo "No package-lock.json found, using npm install (production)"
-            npm install --only=production --legacy-peer-deps --no-audit --no-fund
+            npm install --legacy-peer-deps --no-audit --no-fund
           fi
 
           # Ensure TypeScript is available locally so we can compile the handler
