@@ -1,3 +1,4 @@
+export {};
 const serverless = require('serverless-http');
 const express = require('express');
 const cors = require('cors');
@@ -19,4 +20,3 @@ libraryApp.use(helmet());
 libraryApp.use('/', libraryRoutes.default || libraryRoutes);
 
 module.exports.handler = serverless(libraryApp);
-

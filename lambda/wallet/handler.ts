@@ -1,3 +1,4 @@
+export {};
 const serverless = require('serverless-http');
 const express = require('express');
 const cors = require('cors');
@@ -19,4 +20,3 @@ walletApp.use(helmet());
 walletApp.use('/', walletRoutes.default || walletRoutes);
 
 module.exports.handler = serverless(walletApp);
-

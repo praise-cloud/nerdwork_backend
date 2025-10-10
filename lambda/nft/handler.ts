@@ -1,3 +1,4 @@
+export {};
 const serverless = require('serverless-http');
 const express = require('express');
 const cors = require('cors');
@@ -19,4 +20,3 @@ nftApp.use(helmet());
 nftApp.use('/', nftRoutes.default || nftRoutes);
 
 module.exports.handler = serverless(nftApp);
-

@@ -1,3 +1,4 @@
+export {};
 const serverless = require('serverless-http');
 const express = require('express');
 const cors = require('cors');
@@ -19,4 +20,3 @@ paymentApp.use(helmet());
 paymentApp.use('/', paymentRoutes.default || paymentRoutes);
 
 module.exports.handler = serverless(paymentApp);
-

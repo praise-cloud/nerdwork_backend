@@ -1,3 +1,4 @@
+export {};
 const serverless = require('serverless-http');
 const express = require('express');
 const cors = require('cors');
@@ -19,4 +20,3 @@ chapterApp.use(helmet());
 chapterApp.use('/', chapterRoutes.default || chapterRoutes);
 
 module.exports.handler = serverless(chapterApp);
-
