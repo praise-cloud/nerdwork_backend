@@ -102,6 +102,7 @@ jobs:
           mkdir -p ./lambda-packages/${{ matrix.service }}
           cp -r ./dist/* ./lambda-packages/${{ matrix.service }}/
           cp package.json ./lambda-packages/${{ matrix.service }}/
+          cp package-lock.json ./lambda-packages/${{ matrix.service }}/  # Add this line: Copy root lockfile
           cd ./lambda-packages/${{ matrix.service }}
           npm ci --production --frozen-lockfile
 
