@@ -88,18 +88,16 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Install Serverless Framework
-        run: |
-          # Install serverless locally for reproducible usage in this job
-          npm install --no-save serverless --no-audit --no-fund
-          # Then call deploy with npx
-          npx serverless deploy --stage $STAGE --verbose
-
       - name: Download build artifacts
         uses: actions/download-artifact@v4
         with:
           name: backend-build
-          path: ./dist-main
+          path: ./dist
+
+      - name: Install Serverless Framework
+        run: |
+          # Install serverless locally for reproducible usage in this job
+          npm install --no-save serverless@latest
 
       - name: Setup and build service
         working-directory: lambda/${{ matrix.service }}
@@ -112,10 +110,10 @@ jobs:
           # Copy the pre-built dist files (compiled JavaScript)
           echo "\n=== Copying pre-built artifacts ==="
           mkdir -p dist
-          cp -r ../../dist-main/* ./dist/ 2>/dev/null || {
+          cp -r ../../dist/* ./dist/ 2>/dev/null || {
             echo "Warning: Some dist files may not have been copied"
             echo "Available dist contents:"
-            find ../../dist-main -maxdepth 2 -type f | head -10
+            find ../../dist -maxdepth 2 -type f | head -10
           }
 
           # Install production dependencies only (handlers typically only need runtime deps)
@@ -149,7 +147,8 @@ jobs:
           echo "=== Deploying service: ${{ matrix.service }} ==="
           STAGE="${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' && 'prod' || 'dev' }}"
           echo "Deploying to stage: $STAGE"
-          serverless deploy --stage $STAGE --verbose
+          # Use locally installed serverless via npx to avoid relying on global binaries
+          npx serverless deploy --stage $STAGE --verbose
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
