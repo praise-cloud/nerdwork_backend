@@ -88,84 +88,27 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: backend-build
-          path: ./dist
-
       - name: Install Serverless Framework
         run: npm install -g serverless
 
-      - name: Install service dependencies
+      - name: Copy source code and install dependencies for service
         run: |
-          mkdir -p ./lambda-packages/${{ matrix.service }}
-          cp -r ./dist/* ./lambda-packages/${{ matrix.service }}/
-          cp package.json ./lambda-packages/${{ matrix.service }}/
-          cp package-lock.json ./lambda-packages/${{ matrix.service }}/
-          cd ./lambda-packages/${{ matrix.service }}
-          npm ci --production --frozen-lockfile || npm install --frozen-lockfile --production
-
-      - name: Copy and compile handler.ts for service
-        run: |
-          mkdir -p ./lambda-packages/${{ matrix.service }}/src
-          cp lambda/${{ matrix.service }}/handler.ts ./lambda-packages/${{ matrix.service }}/src/handler.ts
-          cp lambda/${{ matrix.service }}/routes/auth.routes.ts ./lambda-packages/${{ matrix.service }}/src/routes/auth.routes.ts  # Adjust for service-specific routes
-          cp lambda/${{ matrix.service }}/server.ts ./lambda-packages/${{ matrix.service }}/src/server.ts  # Adjust if needed
-
-          cd ./lambda-packages/${{ matrix.service }}
-          npx tsc src/handler.ts --outDir dist --target es2020 --module commonjs --esModuleInterop
-          mv dist/handler.js handler.js
-
-      - name: Create serverless.yml
-        run: |
-          cat > ./lambda-packages/${{ matrix.service }}/serverless.yml << EOL
-          service: nerdwork-${{ matrix.service }}
-
-          provider:
-            name: aws
-            runtime: nodejs20.x
-            stage: \${opt:stage, '${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' && 'prod' || 'dev' }}'}
-            region: \${opt:region, '${{ secrets.AWS_REGION }}'}
-            environment:
-              NODE_ENV: \${opt:stage, '${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' && 'prod' || 'dev' }}'}
-              DATABASE_URL: ${{ secrets.DATABASE_URL }}
-              JWT_SECRET: ${{ secrets.JWT_SECRET }}
-              AWS_REGION: \${self:provider.region}
-            iam:
-              role:
-                statements:
-                  - Effect: Allow
-                    Action:
-                      - ssm:GetParameter
-                    Resource:
-                      - arn:aws:ssm:\${self:provider.region}:*:parameter/nerdwork/\${self:provider.stage}/*
-
-          functions:
-            api:
-              handler: handler.handler
-              events:
-                - httpApi:
-                    path: /${{ matrix.service }}
-                    method: any
-                - httpApi:
-                    path: /${{ matrix.service }}/{proxy+}
-                    method: any
-
-          plugins:
-            - serverless-offline
-            - serverless-plugin-typescript
-
-          custom:
-            serverlessPluginTypescript:
-              tsConfigFileLocation: './tsconfig.json'
-          EOL
+          cd lambda/${{ matrix.service }}
+          
+          # Copy the entire src directory from the main project for compilation
+          cp -r ../../src .
+          
+          # Install dependencies for this specific service
+          npm install
+          
+          # Build the service
+          npm run build
 
       - name: Deploy to AWS Lambda
         run: |
-          cd ./lambda-packages/${{ matrix.service }}
+          cd lambda/${{ matrix.service }}
           STAGE="${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' && 'prod' || 'dev' }}"
-          serverless deploy --stage $STAGE || exit 1
+          serverless deploy --stage $STAGE
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
