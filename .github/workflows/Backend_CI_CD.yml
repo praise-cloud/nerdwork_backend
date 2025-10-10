@@ -89,7 +89,11 @@ jobs:
           node-version: '20'
 
       - name: Install Serverless Framework
-        run: npm install -g serverless
+        run: |
+          # Install serverless locally for reproducible usage in this job
+          npm install --no-save serverless --no-audit --no-fund
+          # Then call deploy with npx
+          npx serverless deploy --stage $STAGE --verbose
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
@@ -114,15 +118,14 @@ jobs:
             find ../../dist-main -maxdepth 2 -type f | head -10
           }
 
-          # Install dependencies
-          echo "\n=== Installing dependencies ==="
+          # Install production dependencies only (handlers typically only need runtime deps)
+          echo "\n=== Installing production dependencies ==="
           if [ -f "package-lock.json" ]; then
-            echo "Found package-lock.json, using npm ci"
-            rm -rf node_modules
-            npm ci --legacy-peer-deps
+            echo "Found package-lock.json, using npm ci (production)"
+            npm ci --only=production --legacy-peer-deps --no-audit --no-fund
           else
-            echo "No package-lock.json found, using npm install"
-            npm install --legacy-peer-deps
+            echo "No package-lock.json found, using npm install (production)"
+            npm install --only=production --legacy-peer-deps --no-audit --no-fund
           fi
 
           # Ensure TypeScript is available locally so we can compile the handler
