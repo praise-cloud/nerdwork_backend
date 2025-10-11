@@ -165,6 +165,11 @@ jobs:
 
       - name: Deploy to AWS Lambda
         working-directory: lambda/${{ matrix.service }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
         run: |
           echo "=== Deploying service: ${{ matrix.service }} ==="
 
@@ -182,11 +187,6 @@ jobs:
           STAGE="prod"
           echo "Deploying to stage: $STAGE"
           npx serverless deploy --stage $STAGE --verbose
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
 
       - name: Notify failure
         if: failure()
