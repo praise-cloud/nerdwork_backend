@@ -49,7 +49,7 @@ jobs:
       - name: Run tests
         run: npm test || echo "No tests configured"
         env:
-          DATABASE_URL: ${{secrets.DATABASE_URL}}
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/nerdwork_test
           NODE_ENV: test
 
       - name: Build application
@@ -79,7 +79,6 @@ jobs:
     needs: [backend-ci]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
-    environment: production
 
     strategy:
       fail-fast: false
@@ -106,6 +105,24 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '20'
+
+      - name: Verify AWS credentials are available
+        run: |
+          echo "Checking if AWS credentials are set..."
+          if [ -z "${{ secrets.AWS_ACCESS_KEY_ID }}" ]; then
+            echo "❌ AWS_ACCESS_KEY_ID secret is not set in GitHub"
+            echo "Please add it to Settings → Secrets → Actions or Environment secrets"
+            exit 1
+          fi
+          if [ -z "${{ secrets.AWS_SECRET_ACCESS_KEY }}" ]; then
+            echo "❌ AWS_SECRET_ACCESS_KEY secret is not set in GitHub"
+            exit 1
+          fi
+          if [ -z "${{ secrets.AWS_REGION }}" ]; then
+            echo "❌ AWS_REGION secret is not set in GitHub"
+            exit 1
+          fi
+          echo "✅ All required AWS secrets are configured"
 
       - name: Download build artifacts
         uses: actions/download-artifact@v4
@@ -165,11 +182,6 @@ jobs:
 
       - name: Deploy to AWS Lambda
         working-directory: lambda/${{ matrix.service }}
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
         run: |
           echo "=== Deploying service: ${{ matrix.service }} ==="
 
@@ -187,6 +199,13 @@ jobs:
           STAGE="prod"
           echo "Deploying to stage: $STAGE"
           npx serverless deploy --stage $STAGE --verbose
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
+          SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
 
       - name: Notify failure
         if: failure()
