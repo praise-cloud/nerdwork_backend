@@ -38,6 +38,13 @@ jobs:
         with:
           node-version: '20'
 
+      - name: Configure AWS Credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
+
       - name: Build root project
         run: |
           echo "=== Building root project ==="
@@ -87,23 +94,25 @@ jobs:
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
         run: |
           echo "=== Deploying ${{ matrix.service }} to AWS Lambda ==="
-          npx serverless deploy --stage prod --verbose
+
+          # Verify AWS credentials are set
+          if [ -z "$AWS_ACCESS_KEY_ID" ]; then
+            echo "❌ AWS_ACCESS_KEY_ID not set"
+            exit 1
+          fi
+
+          # Configure AWS credentials explicitly
+          aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID"
+          aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
+          aws configure set default.region "$AWS_REGION"
+
+          echo "✅ AWS credentials configured"
+
+          # Deploy
+          npx serverless deploy --stage prod --region $AWS_REGION --verbose
 
       - name: Notify on failure
         if: failure()
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            try {
-              await github.rest.issues.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title: `🚨 Backend Deployment Failed - ${{ matrix.service }}`,
-                body: `## Deployment Failure Report\n\n**Service:** ${{ matrix.service }}\n**Stage:** prod\n**Triggered by:** ${context.actor}\n\n**Logs:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\n\n**Workflow:** ${context.workflow}\n**Branch:** ${context.ref}\n**Commit:** ${context.sha.substring(0, 7)}\n\n---\n*This issue was automatically created by the CI/CD pipeline*`,
-                labels: ['deployment-failure', 'backend', '${{ matrix.service }}']
-              });
-              console.log('Issue created successfully');
-            } catch (error) {
-              console.log('Failed to create issue:', error.message);
-            }
+        run: |
+          echo "❌ Deployment failed for ${{ matrix.service }}"
+          echo "Check the logs above for details"
