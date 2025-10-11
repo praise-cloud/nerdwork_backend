@@ -113,16 +113,30 @@ jobs:
           name: backend-build
           path: ./
 
-      - name: Install Serverless Framework
-        run: npm install --no-save serverless@3
-
       - name: Setup service for deployment
         working-directory: lambda/${{ matrix.service }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
           echo "=== Setting up service: ${{ matrix.service }} ==="
           echo "Current directory: $(pwd)"
           echo "Files in service directory:"
           ls -la
+
+          # Verify AWS credentials are available
+          echo ""
+          echo "=== Verifying AWS credentials ==="
+          if [ -z "$AWS_ACCESS_KEY_ID" ]; then
+            echo "❌ AWS_ACCESS_KEY_ID not set"
+            exit 1
+          fi
+          if [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
+            echo "❌ AWS_SECRET_ACCESS_KEY not set"
+            exit 1
+          fi
+          echo "✅ AWS credentials are set"
 
           # Verify handler was built
           echo ""
@@ -148,10 +162,7 @@ jobs:
           # Install all dependencies (including plugins for deployment)
           echo ""
           echo "=== Installing dependencies and plugins ==="
-          if [ -f "package-lock.json" ]; then
-            echo "Found package-lock.json, using npm ci"
-            npm ci --legacy-peer-deps --no-audit --no-fund
-          elif [ -f "package.json" ]; then
+          if [ -f "package.json" ]; then
             echo "Found package.json, using npm install"
             npm install --legacy-peer-deps --no-audit --no-fund
           else
