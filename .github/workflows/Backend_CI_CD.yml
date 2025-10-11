@@ -38,13 +38,6 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Configure AWS Credentials
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          aws-access-key-id: AKIATL7CPLQQU7DGNP7I
-          aws-secret-access-key: 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
-          aws-region: us-west-2
-
       - name: Build root project
         run: |
           echo "=== Building root project ==="
@@ -86,25 +79,20 @@ jobs:
 
       - name: Deploy to AWS Lambda
         working-directory: lambda/${{ matrix.service }}
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_REGION }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
         run: |
           echo "=== Deploying ${{ matrix.service }} to AWS Lambda ==="
-
-          # Export AWS credentials for Serverless Framework
-          export AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}"
-          export AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}"
-          export AWS_REGION="${{ secrets.AWS_REGION }}"
-          export DATABASE_URL="${{ secrets.DATABASE_URL }}"
-          export JWT_SECRET="${{ secrets.JWT_SECRET }}"
-
-          # Verify credentials
-          echo "AWS Region: $AWS_REGION"
-          echo "AWS Access Key ID: ${AWS_ACCESS_KEY_ID:0:10}..."
-
-          # Deploy
+          echo "Region: $AWS_REGION"
+          echo "Credentials loaded: $([ -n "$AWS_ACCESS_KEY_ID" ] && echo 'YES' || echo 'NO')"
           npx serverless deploy --stage prod --verbose
 
       - name: Notify on failure
         if: failure()
         run: |
           echo "❌ Deployment failed for ${{ matrix.service }}"
-          echo "Check the logs above for details"
