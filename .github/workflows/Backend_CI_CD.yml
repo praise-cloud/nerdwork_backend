@@ -145,17 +145,18 @@ jobs:
             echo "⚠️  Warning: Shared dist directory not found"
           fi
 
-          # Install production dependencies only
+          # Install all dependencies (including plugins for deployment)
           echo ""
-          echo "=== Installing production dependencies ==="
+          echo "=== Installing dependencies and plugins ==="
           if [ -f "package-lock.json" ]; then
             echo "Found package-lock.json, using npm ci"
-            npm ci --omit=dev --legacy-peer-deps --no-audit --no-fund
+            npm ci --legacy-peer-deps --no-audit --no-fund
           elif [ -f "package.json" ]; then
             echo "Found package.json, using npm install"
-            npm install --omit=dev --legacy-peer-deps --no-audit --no-fund
+            npm install --legacy-peer-deps --no-audit --no-fund
           else
-            echo "No package.json found, skipping dependency installation"
+            echo "No package.json found, installing common plugins manually"
+            npm install --no-save serverless-offline serverless-plugin-typescript serverless-dotenv-plugin
           fi
 
           # Final verification
