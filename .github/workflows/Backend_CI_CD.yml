@@ -49,7 +49,7 @@ jobs:
       - name: Run tests
         run: npm test || echo "No tests configured"
         env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/nerdwork_test
+          DATABASE_URL: ${{ secrets.POSTGRES_URL}}
           NODE_ENV: test
 
       - name: Build application
