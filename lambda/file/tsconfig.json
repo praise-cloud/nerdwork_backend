@@ -8,11 +8,11 @@
     "skipLibCheck": true,
     "forceConsistentCasingInFileNames": true,
     "outDir": "dist",
+    "baseUrl": ".",
     "resolveJsonModule": true,
     "allowSyntheticDefaultImports": true,
     "noImplicitAny": false,
-    "strictNullChecks": false,
-    "ignoreDeprecations": "6.0"
+    "strictNullChecks": false
   },
   "include": ["**/*.ts"],
   "exclude": ["node_modules", "dist"]

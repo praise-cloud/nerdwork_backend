@@ -48,7 +48,6 @@ functions:
 
 plugins:
   - serverless-offline
-  - serverless-plugin-typescript
   - serverless-dotenv-plugin
 
 custom:

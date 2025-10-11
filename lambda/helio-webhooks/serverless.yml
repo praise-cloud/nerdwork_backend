@@ -3,7 +3,7 @@ service: nerdwork-helio-webhooks
 provider:
   name: aws
   runtime: nodejs20.x
-  stage: ${opt:stage, 'dev'}
+  stage: ${opt:stage, '
   region: ${opt:region, 'us-east-1'}
   deploymentBucket:
     name: nerdwork-serverless-artifacts-${self:provider.region}
@@ -38,9 +38,11 @@ functions:
 
 plugins:
   - serverless-offline
-  - serverless-plugin-typescript
   - serverless-dotenv-plugin
 
 custom:
+  serverless-offline:
+    httpPort: 3000
+m:
   serverless-offline:
     httpPort: 3000
