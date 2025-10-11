@@ -86,30 +86,22 @@ jobs:
 
       - name: Deploy to AWS Lambda
         working-directory: lambda/${{ matrix.service }}
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
-          DATABASE_URL: ${{ secrets.DATABASE_URL }}
-          JWT_SECRET: ${{ secrets.JWT_SECRET }}
         run: |
           echo "=== Deploying ${{ matrix.service }} to AWS Lambda ==="
 
-          # Verify AWS credentials are set
-          if [ -z "$AWS_ACCESS_KEY_ID" ]; then
-            echo "❌ AWS_ACCESS_KEY_ID not set"
-            exit 1
-          fi
+          # Export AWS credentials for Serverless Framework
+          export AWS_ACCESS_KEY_ID="${{ secrets.AWS_ACCESS_KEY_ID }}"
+          export AWS_SECRET_ACCESS_KEY="${{ secrets.AWS_SECRET_ACCESS_KEY }}"
+          export AWS_REGION="${{ secrets.AWS_REGION }}"
+          export DATABASE_URL="${{ secrets.DATABASE_URL }}"
+          export JWT_SECRET="${{ secrets.JWT_SECRET }}"
 
-          # Configure AWS credentials explicitly
-          aws configure set aws_access_key_id "$AWS_ACCESS_KEY_ID"
-          aws configure set aws_secret_access_key "$AWS_SECRET_ACCESS_KEY"
-          aws configure set default.region "$AWS_REGION"
-
-          echo "✅ AWS credentials configured"
+          # Verify credentials
+          echo "AWS Region: $AWS_REGION"
+          echo "AWS Access Key ID: ${AWS_ACCESS_KEY_ID:0:10}..."
 
           # Deploy
-          npx serverless deploy --stage prod --region $AWS_REGION --verbose
+          npx serverless deploy --stage prod --verbose
 
       - name: Notify on failure
         if: failure()
