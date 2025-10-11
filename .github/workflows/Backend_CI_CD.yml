@@ -49,7 +49,7 @@ jobs:
       - name: Run tests
         run: npm test || echo "No tests configured"
         env:
-          DATABASE_URL: ${{ secrets.DATABASE_URL}}
+          DATABASE_URL: ${{secrets.DATABASE_URL}}
           NODE_ENV: test
 
       - name: Build application
@@ -115,28 +115,11 @@ jobs:
 
       - name: Setup service for deployment
         working-directory: lambda/${{ matrix.service }}
-        env:
-          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
-          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
           echo "=== Setting up service: ${{ matrix.service }} ==="
           echo "Current directory: $(pwd)"
           echo "Files in service directory:"
           ls -la
-
-          # Verify AWS credentials are available
-          echo ""
-          echo "=== Verifying AWS credentials ==="
-          if [ -z "$AWS_ACCESS_KEY_ID" ]; then
-            echo "❌ AWS_ACCESS_KEY_ID not set"
-            exit 1
-          fi
-          if [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
-            echo "❌ AWS_SECRET_ACCESS_KEY not set"
-            exit 1
-          fi
-          echo "✅ AWS credentials are set"
 
           # Verify handler was built
           echo ""
@@ -163,11 +146,13 @@ jobs:
           echo ""
           echo "=== Installing dependencies and plugins ==="
           if [ -f "package.json" ]; then
-            echo "Found package.json, using npm install"
+            echo "Found package.json, installing dependencies"
+            # Remove lock file to avoid sync issues, then install
+            rm -f package-lock.json
             npm install --legacy-peer-deps --no-audit --no-fund
           else
-            echo "No package.json found, installing common plugins manually"
-            npm install --no-save serverless-offline serverless-plugin-typescript serverless-dotenv-plugin
+            echo "❌ No package.json found!"
+            exit 1
           fi
 
           # Final verification
@@ -182,6 +167,18 @@ jobs:
         working-directory: lambda/${{ matrix.service }}
         run: |
           echo "=== Deploying service: ${{ matrix.service }} ==="
+
+          # Verify AWS credentials are available
+          if [ -z "$AWS_ACCESS_KEY_ID" ]; then
+            echo "❌ AWS_ACCESS_KEY_ID not set"
+            exit 1
+          fi
+          if [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
+            echo "❌ AWS_SECRET_ACCESS_KEY not set"
+            exit 1
+          fi
+          echo "✅ AWS credentials verified"
+
           STAGE="prod"
           echo "Deploying to stage: $STAGE"
           npx serverless deploy --stage $STAGE --verbose
