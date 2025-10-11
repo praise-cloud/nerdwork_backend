@@ -107,18 +107,22 @@ jobs:
           node-version: '20'
 
       - name: Verify AWS credentials are available
+        env:
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_REGION: ${{ secrets.AWS_REGION }}
         run: |
           echo "Checking if AWS credentials are set..."
-          if [ -z "${{ secrets.AWS_ACCESS_KEY_ID }}" ]; then
+          if [ -z "$AWS_ACCESS_KEY_ID" ]; then
             echo "❌ AWS_ACCESS_KEY_ID secret is not set in GitHub"
             echo "Please add it to Settings → Secrets → Actions or Environment secrets"
             exit 1
           fi
-          if [ -z "${{ secrets.AWS_SECRET_ACCESS_KEY }}" ]; then
+          if [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
             echo "❌ AWS_SECRET_ACCESS_KEY secret is not set in GitHub"
             exit 1
           fi
-          if [ -z "${{ secrets.AWS_REGION }}" ]; then
+          if [ -z "$AWS_REGION" ]; then
             echo "❌ AWS_REGION secret is not set in GitHub"
             exit 1
           fi
@@ -132,6 +136,9 @@ jobs:
 
       - name: Setup service for deployment
         working-directory: lambda/${{ matrix.service }}
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+          JWT_SECRET: ${{ secrets.JWT_SECRET }}
         run: |
           echo "=== Setting up service: ${{ matrix.service }} ==="
           echo "Current directory: $(pwd)"
@@ -200,11 +207,16 @@ jobs:
           echo "Deploying to stage: $STAGE"
           npx serverless deploy --stage $STAGE --verbose
         env:
+          # AWS Credentials
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
+
+          # Application Secrets
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
+
+          # Serverless Framework
           SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
 
       - name: Notify failure
