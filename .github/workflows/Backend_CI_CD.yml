@@ -46,24 +46,43 @@ jobs:
       - name: Lint code
         run: npm run lint || echo "No linting configured"
 
+      - name: Run tests
+        run: npm test || echo "No tests configured"
+        env:
+          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/nerdwork_test
+          NODE_ENV: test
+
       - name: Build application
         run: npm run build
+
+      - name: Build lambda handlers
+        run: |
+          echo "=== Building lambda handlers ==="
+          for service in auth comic chapter file library nft payment profile transaction wallet helio-webhooks; do
+            if [ -f "lambda/$service/handler.ts" ]; then
+              echo "Building handler for $service"
+              npx tsc lambda/$service/handler.ts --outDir lambda/$service/dist --module commonjs --target es2020 --esModuleInterop --skipLibCheck --allowSyntheticDefaultImports --resolveJsonModule
+            fi
+          done
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
           name: backend-build
-          path: ./dist
+          path: |
+            ./dist
+            ./lambda/*/dist/handler.js
           retention-days: 1
 
   deploy-lambda-functions:
     name: Deploy Lambda Functions
     needs: [backend-ci]
-    if: github.event_name == 'push' && (github.ref == 'refs/heads/master')
+    if: github.event_name == 'push' && github.ref == 'refs/heads/master'
     runs-on: ubuntu-latest
-    environment: ${{ github.ref == 'refs/heads/master' && 'production' || 'development' }}
+    environment: production
 
     strategy:
+      fail-fast: false
       matrix:
         service: [
           'auth',
@@ -92,14 +111,12 @@ jobs:
         uses: actions/download-artifact@v4
         with:
           name: backend-build
-          path: ./dist
+          path: ./
 
       - name: Install Serverless Framework
-        run: |
-          # Install serverless locally for reproducible usage in this job
-          npm install --no-save serverless@latest
+        run: npm install --no-save serverless@latest
 
-      - name: Setup and build service
+      - name: Setup service for deployment
         working-directory: lambda/${{ matrix.service }}
         run: |
           echo "=== Setting up service: ${{ matrix.service }} ==="
@@ -107,47 +124,54 @@ jobs:
           echo "Files in service directory:"
           ls -la
 
-          # Copy the pre-built dist files (compiled JavaScript)
-          echo "\n=== Copying pre-built artifacts ==="
-          mkdir -p dist
-          cp -r ../../dist/* ./dist/ 2>/dev/null || {
-            echo "Warning: Some dist files may not have been copied"
-            echo "Available dist contents:"
-            find ../../dist -maxdepth 2 -type f | head -10
-          }
-
-          # Install production dependencies only (handlers typically only need runtime deps)
-          echo "\n=== Installing production dependencies ==="
-          if [ -f "package-lock.json" ]; then
-            echo "Found package-lock.json, using npm ci (production)"
-            npm ci --only=production --legacy-peer-deps --no-audit --no-fund
+          # Verify handler was built
+          echo ""
+          echo "=== Verifying pre-built handler ==="
+          if [ -f "dist/handler.js" ]; then
+            echo "✅ Handler found at dist/handler.js"
           else
-            echo "No package-lock.json found, using npm install (production)"
-            npm install --legacy-peer-deps --no-audit --no-fund
+            echo "❌ Handler not found! Deployment will fail."
+            exit 1
           fi
 
-          # Ensure TypeScript is available locally so we can compile the handler
-          # Installing with --no-save avoids modifying package.json
-          echo "\n=== Installing TypeScript locally for handler compilation ==="
-          npm install --no-save typescript --no-audit --no-fund || echo "Warning: failed to install typescript locally"
+          # Verify shared dist files exist
+          echo ""
+          echo "=== Verifying shared build artifacts ==="
+          if [ -d "../../dist" ]; then
+            echo "✅ Shared dist directory found"
+            echo "Sample contents:"
+            find ../../dist -maxdepth 2 -type f | head -5
+          else
+            echo "⚠️  Warning: Shared dist directory not found"
+          fi
 
-          # Compile only the handler (which imports from dist)
-          echo "\n=== Compiling handler ==="
-          npx tsc handler.ts --outDir dist --module commonjs --target es2020 --esModuleInterop --skipLibCheck --allowSyntheticDefaultImports
+          # Install production dependencies only
+          echo ""
+          echo "=== Installing production dependencies ==="
+          if [ -f "package-lock.json" ]; then
+            echo "Found package-lock.json, using npm ci"
+            npm ci --omit=dev --legacy-peer-deps --no-audit --no-fund
+          elif [ -f "package.json" ]; then
+            echo "Found package.json, using npm install"
+            npm install --omit=dev --legacy-peer-deps --no-audit --no-fund
+          else
+            echo "No package.json found, skipping dependency installation"
+          fi
 
-          # Verify build output
-          echo "\n=== Verifying build output ==="
-          [ -f "dist/handler.js" ] && echo "✅ Handler compiled successfully" || echo "❌ Handler compilation failed"
+          # Final verification
+          echo ""
+          echo "=== Final deployment verification ==="
           echo "Contents of dist directory:"
-          ls -la dist/ | head -10
+          ls -la dist/ 2>/dev/null || echo "No dist directory"
+          echo ""
+          echo "Service ready for deployment ✅"
 
       - name: Deploy to AWS Lambda
         working-directory: lambda/${{ matrix.service }}
         run: |
           echo "=== Deploying service: ${{ matrix.service }} ==="
-          STAGE="${{ github.ref == 'refs/heads/master' || github.ref == 'refs/heads/main' && 'prod' || 'dev' }}"
+          STAGE="prod"
           echo "Deploying to stage: $STAGE"
-          # Use locally installed serverless via npx to avoid relying on global binaries
           npx serverless deploy --stage $STAGE --verbose
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
@@ -164,8 +188,9 @@ jobs:
               await github.rest.issues.create({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
-                title: `Backend Deployment Failed - ${{ matrix.service }}`,
-                body: `Deployment failed for service: ${{ matrix.service }}\n\nCheck logs: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\n\nWorkflow: ${context.workflow}\nRef: ${context.ref}`
+                title: `🚨 Backend Deployment Failed - ${{ matrix.service }}`,
+                body: `## Deployment Failure Report\n\n**Service:** ${{ matrix.service }}\n**Stage:** prod\n**Triggered by:** ${context.actor}\n\n**Logs:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\n\n**Workflow:** ${context.workflow}\n**Branch:** ${context.ref}\n**Commit:** ${context.sha.substring(0, 7)}\n\n---\n*This issue was automatically created by the CI/CD pipeline*`,
+                labels: ['deployment-failure', 'backend', '${{ matrix.service }}']
               });
               console.log('Issue created successfully');
             } catch (error) {
