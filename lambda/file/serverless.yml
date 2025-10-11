@@ -4,24 +4,30 @@ provider:
   name: aws
   runtime: nodejs20.x
   stage: ${opt:stage, 'dev'}
-  region: ${opt:region, 'us-west-2'}
+  region: ${opt:region, 'us-east-1'}
+  deploymentBucket:
+    name: nerdwork-serverless-artifacts-${self:provider.region}
+    serverSideEncryption: AES256
   environment:
-    NODE_ENV: ${opt:stage, 'dev'}
-    DATABASE_URL: ${ssm:/nerdwork/${self:provider.stage}/database-url}
-    JWT_SECRET: ${ssm:/nerdwork/${self:provider.stage}/jwt-secret}
+    NODE_ENV: ${self:provider.stage}
+    DATABASE_URL: ${env:DATABASE_URL}
+    JWT_SECRET: ${env:JWT_SECRET}
     AWS_REGION: ${self:provider.region}
   iam:
     role:
       statements:
         - Effect: Allow
           Action:
-            - ssm:GetParameter
-          Resource:
-            - arn:aws:ssm:${self:provider.region}:*:parameter/nerdwork/${self:provider.stage}/*
+            - logs:CreateLogGroup
+            - logs:CreateLogStream
+            - logs:PutLogEvents
+          Resource: "*"
 
 functions:
   api:
     handler: dist/handler.handler
+    timeout: 30
+    memorySize: 512
     events:
       - httpApi:
           path: /file
@@ -32,6 +38,9 @@ functions:
 
 plugins:
   - serverless-offline
+  - serverless-plugin-typescript
+  - serverless-dotenv-plugin
 
-
-
+custom:
+  serverless-offline:
+    httpPort: 3000

@@ -9,10 +9,7 @@
     "strictNullChecks": false,  // Allow undefined as string (fixes HELIO_PCURRENCY, etc.)
     "skipLibCheck": true,  // Skip node_modules checks (fixes Drizzle/Irys errors)
     "forceConsistentCasingInFileNames": true,
-    "baseUrl": ".",
-    "paths": {
-      "*": ["src/*"]
-    }
+    "ignoreDeprecations": "6.0"
   },
   "include": [
     "src/**/*"

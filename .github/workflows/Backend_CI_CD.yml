@@ -7,78 +7,10 @@ on:
     branches: [master]
 
 jobs:
-  backend-ci:
-    name: Backend CI
+  build-and-deploy:
+    name: Build and Deploy
     runs-on: ubuntu-latest
-    environment: ${{ github.ref == 'refs/heads/master' && 'production' || 'development' }}
-
-    services:
-      postgres:
-        image: postgres:latest
-        env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgres
-          POSTGRES_DB: nerdwork_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
-          --health-timeout 5s
-          --health-retries 5
-
-    steps:
-      - name: Checkout code
-        uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '20'
-          cache: 'npm'
-          cache-dependency-path: './package-lock.json'
-
-      - name: Install dependencies
-        run: |
-          rm -rf node_modules
-          npm ci --frozen-lockfile || npm install --frozen-lockfile
-
-      - name: Lint code
-        run: npm run lint || echo "No linting configured"
-
-      - name: Run tests
-        run: npm test || echo "No tests configured"
-        env:
-          DATABASE_URL: postgresql://postgres:postgres@localhost:5432/nerdwork_test
-          NODE_ENV: test
-
-      - name: Build application
-        run: npm run build
-
-      - name: Build lambda handlers
-        run: |
-          echo "=== Building lambda handlers ==="
-          for service in auth comic chapter file library nft payment profile transaction wallet helio-webhooks; do
-            if [ -f "lambda/$service/handler.ts" ]; then
-              echo "Building handler for $service"
-              npx tsc lambda/$service/handler.ts --outDir lambda/$service/dist --module commonjs --target es2020 --esModuleInterop --skipLibCheck --allowSyntheticDefaultImports --resolveJsonModule
-            fi
-          done
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-build
-          path: |
-            ./dist
-            ./lambda/*/dist/handler.js
-          retention-days: 1
-
-  deploy-lambda-functions:
-    name: Deploy Lambda Functions
-    needs: [backend-ci]
     if: github.event_name == 'push' && github.ref == 'refs/heads/master'
-    runs-on: ubuntu-latest
 
     strategy:
       fail-fast: false
@@ -106,122 +38,59 @@ jobs:
         with:
           node-version: '20'
 
-      - name: Verify AWS credentials are available
+      - name: Build root project
         run: |
-          echo "Checking if AWS credentials are set..."
-          if [ -z "${{ secrets.AWS_ACCESS_KEY_ID }}" ]; then
-            echo "❌ AWS_ACCESS_KEY_ID secret is not set in GitHub"
-            echo "Please add it to Settings → Secrets → Actions or Environment secrets"
-            exit 1
-          fi
-          if [ -z "${{ secrets.AWS_SECRET_ACCESS_KEY }}" ]; then
-            echo "❌ AWS_SECRET_ACCESS_KEY secret is not set in GitHub"
-            exit 1
-          fi
-          if [ -z "${{ secrets.AWS_REGION }}" ]; then
-            echo "❌ AWS_REGION secret is not set in GitHub"
-            exit 1
-          fi
-          echo "✅ All required AWS secrets are configured"
+          echo "=== Building root project ==="
+          npm ci --frozen-lockfile || npm install
+          npm run build
 
-      - name: Download build artifacts
-        uses: actions/download-artifact@v4
-        with:
-          name: backend-build
-          path: ./
+      - name: Build lambda handler
+        run: |
+          echo "=== Building handler for ${{ matrix.service }} ==="
+          if [ -f "lambda/${{ matrix.service }}/handler.ts" ]; then
+            npx tsc lambda/${{ matrix.service }}/handler.ts \
+              --outDir lambda/${{ matrix.service }}/dist \
+              --module commonjs \
+              --target es2020 \
+              --esModuleInterop \
+              --skipLibCheck \
+              --allowSyntheticDefaultImports \
+              --resolveJsonModule
+            echo "✅ Handler compiled"
+          else
+            echo "❌ Handler not found at lambda/${{ matrix.service }}/handler.ts"
+            exit 1
+          fi
 
-      - name: Setup service for deployment
+      - name: Copy shared dist to service
+        run: |
+          echo "=== Copying shared dist files to ${{ matrix.service }} ==="
+          mkdir -p lambda/${{ matrix.service }}/dist
+          cp -r ./dist/* lambda/${{ matrix.service }}/dist/ || echo "No shared dist files"
+
+      - name: Install service dependencies
         working-directory: lambda/${{ matrix.service }}
         run: |
-          echo "=== Setting up service: ${{ matrix.service }} ==="
-          echo "Current directory: $(pwd)"
-          echo "Files in service directory:"
-          ls -la
-
-          # Verify handler was built
-          echo ""
-          echo "=== Verifying pre-built handler ==="
-          if [ -f "dist/handler.js" ]; then
-            echo "✅ Handler found at dist/handler.js"
-          else
-            echo "❌ Handler not found! Deployment will fail."
-            exit 1
-          fi
-
-          # Verify shared dist files exist
-          echo ""
-          echo "=== Verifying shared build artifacts ==="
-          if [ -d "../../dist" ]; then
-            echo "✅ Shared dist directory found"
-            echo "Sample contents:"
-            find ../../dist -maxdepth 2 -type f | head -5
-          else
-            echo "⚠️  Warning: Shared dist directory not found"
-          fi
-
-          # Install all dependencies (including plugins for deployment)
-          echo ""
-          echo "=== Installing dependencies and plugins ==="
+          echo "=== Installing dependencies for ${{ matrix.service }} ==="
           if [ -f "package.json" ]; then
-            echo "Found package.json, installing dependencies"
-            # Remove lock file to avoid sync issues, then install
             rm -f package-lock.json
-            npm install --legacy-peer-deps --no-audit --no-fund
-          else
-            echo "❌ No package.json found!"
-            exit 1
+            npm install --legacy-peer-deps
           fi
-
-          # Final verification
-          echo ""
-          echo "=== Final deployment verification ==="
-          echo "Contents of dist directory:"
-          ls -la dist/ 2>/dev/null || echo "No dist directory"
-          echo ""
-          echo "Service ready for deployment ✅"
 
       - name: Deploy to AWS Lambda
         working-directory: lambda/${{ matrix.service }}
-        run: |
-          echo "=== Deploying service: ${{ matrix.service }} ==="
-
-          # Verify AWS credentials are available
-          if [ -z "$AWS_ACCESS_KEY_ID" ]; then
-            echo "❌ AWS_ACCESS_KEY_ID not set"
-            exit 1
-          fi
-          if [ -z "$AWS_SECRET_ACCESS_KEY" ]; then
-            echo "❌ AWS_SECRET_ACCESS_KEY not set"
-            exit 1
-          fi
-          echo "✅ AWS credentials verified"
-
-          STAGE="prod"
-          echo "Deploying to stage: $STAGE"
-          npx serverless deploy --stage $STAGE --verbose
         env:
           AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
           AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           AWS_REGION: ${{ secrets.AWS_REGION }}
           DATABASE_URL: ${{ secrets.DATABASE_URL }}
           JWT_SECRET: ${{ secrets.JWT_SECRET }}
-          SERVERLESS_ACCESS_KEY: ${{ secrets.SERVERLESS_ACCESS_KEY }}
+        run: |
+          echo "=== Deploying ${{ matrix.service }} to AWS Lambda ==="
+          npx serverless deploy --stage prod --verbose
 
-      - name: Notify failure
+      - name: Notify on failure
         if: failure()
-        uses: actions/github-script@v7
-        with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          script: |
-            try {
-              await github.rest.issues.create({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                title: `🚨 Backend Deployment Failed - ${{ matrix.service }}`,
-                body: `## Deployment Failure Report\n\n**Service:** ${{ matrix.service }}\n**Stage:** prod\n**Triggered by:** ${context.actor}\n\n**Logs:** ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}\n\n**Workflow:** ${context.workflow}\n**Branch:** ${context.ref}\n**Commit:** ${context.sha.substring(0, 7)}\n\n---\n*This issue was automatically created by the CI/CD pipeline*`,
-                labels: ['deployment-failure', 'backend', '${{ matrix.service }}']
-              });
-              console.log('Issue created successfully');
-            } catch (error) {
-              console.log('Failed to create issue:', error.message);
-            }
+        run: |
+          echo "❌ Deployment failed for ${{ matrix.service }}"
+          echo "Check the logs above for details"
